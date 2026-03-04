@@ -3,9 +3,12 @@
 #include <stdint.h>
 #include "Renderer/Renderer.h"
 
+const int WIDTH = 100;
+const int HEIGHT = 50; 
+
 Engine::Engine()
 {
-	renderer = new Renderer(10, 10, 100, 100);
+	renderer = new Renderer(10, 10, WIDTH, HEIGHT);
 }
 
 Engine::~Engine()

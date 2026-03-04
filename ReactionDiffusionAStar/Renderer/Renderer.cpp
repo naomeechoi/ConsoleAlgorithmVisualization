@@ -22,5 +22,6 @@ void Renderer::Draw()
 {
 	static HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleCursorPosition(handle, COORD{ x,y });
-	std::cout << bufferStr;
+	DWORD written;
+	WriteConsoleA(handle, bufferStr.c_str(), (DWORD)bufferStr.size(), &written, nullptr);
 }
