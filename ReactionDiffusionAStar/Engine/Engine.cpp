@@ -1,14 +1,18 @@
 #include "Engine.h"
+#include "Maze/Maze.h"
 #include <Windows.h>
 #include <stdint.h>
 #include "Renderer/Renderer.h"
 
-const int WIDTH = 100;
-const int HEIGHT = 50; 
+const int WIDTH = 70;
+const int HEIGHT = 30;
+
+using std::string;
 
 Engine::Engine()
 {
-	renderer = new Renderer(10, 10, WIDTH, HEIGHT);
+	renderer = new Renderer(0, 0, WIDTH, HEIGHT);
+	maze = new Maze(WIDTH, HEIGHT);
 }
 
 Engine::~Engine()
@@ -17,6 +21,12 @@ Engine::~Engine()
 	{
 		delete renderer;
 		renderer = nullptr;
+	}
+
+	if (maze)
+	{
+		delete maze;
+		maze = nullptr;
 	}
 }
 
@@ -34,7 +44,7 @@ void Engine::Run()
 	currentTime = time.QuadPart;
 	previousTime = currentTime;
 
-	float oneFrameTime = 1.0f / 60.f; //TODO 하드 코딩 수정
+	float oneFrameTime = 1.0f / 200.f; //TODO 하드 코딩 수정
 	while (true) // TODO 종료 시점 정하기
 	{
 		QueryPerformanceCounter(&time);
@@ -49,6 +59,7 @@ void Engine::Run()
 		if (deltaTime >= oneFrameTime)
 		{
 			Tick(deltaTime);
+			Submit();
 			Draw();
 			previousTime = currentTime;
 		}
@@ -57,8 +68,17 @@ void Engine::Run()
 
 void Engine::Tick(float deltaTime)
 {
+	maze->Upadate(deltaTime);
+}
+
+void Engine::Submit()
+{
+	string buf = std::move(renderer->GetBuffer());
+	maze->Submit(buf);
+	renderer->SetWholeBuffer(buf);
 }
 
 void Engine::Draw()
 {
+	renderer->Draw();
 }

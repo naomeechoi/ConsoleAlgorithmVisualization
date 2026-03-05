@@ -8,9 +8,11 @@ public:
 
 private:
 	void Tick(float deltaTime);
+	void Submit();
 	void Draw();
 
 private:
 	class Renderer* renderer;
+	class Maze* maze;
 };
 

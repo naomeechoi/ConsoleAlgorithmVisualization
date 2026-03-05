@@ -7,6 +7,8 @@ public:
 	~Renderer();
 
 	void Summit(int x, int y, char c);
+	std::string& GetBuffer() { return bufferStr; }
+	void SetWholeBuffer(std::string& buf);
 	void Draw();
 private:
 	short x = 0;
