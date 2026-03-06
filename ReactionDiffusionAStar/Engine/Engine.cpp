@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include "Renderer/Renderer.h"
 
-const int WIDTH = 70;
-const int HEIGHT = 30;
+const int WIDTH = 140;
+const int HEIGHT = 40;
 
 using std::string;
 

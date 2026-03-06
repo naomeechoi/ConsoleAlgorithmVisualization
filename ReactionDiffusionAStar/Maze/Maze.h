@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <mutex>
+#include <filesystem>
 
 class Maze
 {
@@ -19,12 +20,16 @@ class Maze
 		ReactionDiffusion(int width, int height);
 		~ReactionDiffusion();
 
+		void SetRandomParams();
+
 		void SetRandomSeed();
 		int GetIdx(int x, int y);
-		void LoadParams();
+		bool IsFileUpdated(const std::string& path);
+		void LoadParams(const std::string& path);
 		void WatchParamsThread();
 		void Update();
 		void Submit(std::string& submitBuf);
+		const std::vector<double>& GetConcentration();
 
 		int width = 0;
 		int height = 0;
@@ -33,12 +38,17 @@ class Maze
 		std::vector<double> nextA;
 		std::vector<double> nextB;
 		
+		std::vector<Params> paramsList;
 		std::atomic<Params> currentParams;
 		std::thread paramsThread;
-		std::atomic<bool> running = true;
+		std::atomic<bool> running{ true };
+
 
 		std::atomic<bool> isReGenerate = false;
 		std::mutex dataMutex;
+		std::mutex paramsMutex;
+
+		std::filesystem::file_time_type lastWriteTime;
 	};
 
 public:
@@ -49,9 +59,18 @@ public:
 	void Submit(std::string& summitBuf);
 
 private:
+	void MixRdSystem(float deltaTime);
 	bool ValidCheck();
 
 private:
-	ReactionDiffusion* rdSystem;
+	int width = 0;
+	int height = 0;
+	std::vector<double> mixedConcentration;
+	ReactionDiffusion* rdSystem1;
+	ReactionDiffusion* rdSystem2;
+
+	int simulationSteps = 0;
+	bool transitioning = false;
+	float transitionTime = 0.0f;
 };
 

@@ -3,16 +3,36 @@
 #include <algorithm>
 #include <fstream>
 #include <Windows.h>
+#include <cmath>
+#include <ctime>
 
 using std::vector;
 using std::string;
+const int MAX_SIMULATIOIN_STEPS = 1000;
+const float MAX_TRANSITION_DURATION = 2.5f;
+
+static void InitialRand()
+{
+	static bool initialized = false;
+	if (initialized)
+		return;
+	
+	srand(static_cast<unsigned int>(std::time(0)));
+	initialized = true;
+}
+
+static int RandomIndex(int min, int max)
+{
+	InitialRand();
+	return min + rand() % (max - min + 1);
+}
 
 Maze::ReactionDiffusion::ReactionDiffusion(int width, int height)
 	:width(width), height(height), curA(width * height, 1.0), curB(width * height, 0.0), nextA(width* height), nextB(width* height)
 {
 	Params initial;
 	currentParams.store(initial);
-	LoadParams();
+	LoadParams("Params.txt");
 
 	paramsThread = std::thread(&Maze::ReactionDiffusion::WatchParamsThread, this);
 }
@@ -25,8 +45,23 @@ Maze::ReactionDiffusion::~ReactionDiffusion()
 	}
 }
 
+void Maze::ReactionDiffusion::SetRandomParams()
+{
+	std::lock_guard<std::mutex> lock(paramsMutex);
+	if (!paramsList.empty())
+	{
+		currentParams.store(paramsList[RandomIndex(0, paramsList.size() - 1)]);
+	}
+	else
+	{
+		currentParams.store(Params());
+	}
+}
+
 void Maze::ReactionDiffusion::SetRandomSeed()
 {
+	SetRandomParams();
+
 	curA.assign(width * height, 1.0);
 	curB.assign(width * height, 0.0);
 	float makeBPercentage = 0.10f;
@@ -49,61 +84,69 @@ int Maze::ReactionDiffusion::GetIdx(int x, int y)
 	return ((y + height) % height) * width + ((x + width) % width);
 }
 
-void Maze::ReactionDiffusion::LoadParams()
+bool Maze::ReactionDiffusion::IsFileUpdated(const string& path)
+{
+	auto ftime = std::filesystem::last_write_time(path);
+	if (ftime != lastWriteTime)
+	{
+		lastWriteTime = ftime;
+		return true; // 파일이 변경됨
+	}
+	return false; // 변경 없음
+}
+
+void Maze::ReactionDiffusion::LoadParams(const std::string& path)
 {
 	std::ifstream file("Params.txt");
 	if (!file.is_open())
 		return;
 
-	Params prevParams = currentParams.load();
-	Params newParams;
+	std::vector<Params> newParamsList;
 	string line;
-	constexpr double EPS = 1e-6;
+
+	Params currentCase;
 	while (std::getline(file, line))
 	{
+		if (line.empty() || line[0] == '#')
+			continue;
+
 		auto pos = line.find('=');
 		if (pos == string::npos)
 			continue;
 
-		string key = std::move(line.substr(0, pos));
-		double value = std::stod(std::move(line.substr(pos + 1)));
-		if (key == "DA")
+		string key = line.substr(0, pos);
+		double value = std::stod(line.substr(pos + 1));
+
+		if (key == "DA")       currentCase.DA = value;
+		else if (key == "DB")  currentCase.DB = value;
+		else if (key == "FEED") currentCase.FEED = value;
+		else if (key == "KILL") currentCase.KILL = value;
+		else if (key == "DT")   currentCase.DT = value;
+
+		if (key == "DT")
 		{
-			newParams.DA = value;
-		}
-		else if (key == "DB")
-		{
-			newParams.DB = value;
-		}
-		else if (key == "FEED")
-		{
-			newParams.FEED = value;
-		}
-		else if (key == "KILL")
-		{
-			newParams.KILL = value;
-		}
-		else if (key == "DT")
-		{
-			newParams.DT = value;
+			newParamsList.push_back(currentCase);
+			currentCase = Params();
 		}
 	}
 
-	if (std::abs(prevParams.DA - newParams.DA) > EPS) isReGenerate.store(true);
-	if (std::abs(prevParams.DB - newParams.DB) > EPS) isReGenerate.store(true);
-	if (std::abs(prevParams.FEED - newParams.FEED) > EPS) isReGenerate.store(true);
-	if (std::abs(prevParams.KILL - newParams.KILL) > EPS) isReGenerate.store(true);
-	if (std::abs(prevParams.DT - newParams.DT) > EPS) isReGenerate.store(true);
-
-	currentParams.exchange(newParams);
+	if (!newParamsList.empty())
+	{
+		std::lock_guard<std::mutex> lock(paramsMutex);
+		paramsList = std::move(newParamsList);
+		isReGenerate.store(true);
+	}
 }
 
 void Maze::ReactionDiffusion::WatchParamsThread()
 {
 	while (running)
 	{
-		LoadParams();
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		if (IsFileUpdated("Params.txt"))
+		{
+			LoadParams("Params.txt");
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		}
 	}
 }
 
@@ -153,27 +196,33 @@ void Maze::ReactionDiffusion::Update()
 	}
 }
 
-void Maze::ReactionDiffusion::Submit(string& submitBuf)
+const std::vector<double>& Maze::ReactionDiffusion::GetConcentration()
 {
 	std::lock_guard<std::mutex> lock(dataMutex);
-	for (int i = 0; i < width * height; i++)
-	{
-		double d = curB[i];
-		submitBuf[i] = (d > 0.35) ? '&' : (d > 0.25) ? '#' : (d > 0.185) ? '*' : (d > 0.10) ? '.' : ' ';
-	}
+	return curB;
 }
 
 Maze::Maze(int width, int height)
+	: width(width), height(height)
 {
-	rdSystem = new ReactionDiffusion(width, height);
-	rdSystem->SetRandomSeed();
+	rdSystem1 = new ReactionDiffusion(width, height);
+	rdSystem1->SetRandomSeed();
+
+	rdSystem2 = new ReactionDiffusion(width, height);
+	rdSystem2->SetRandomSeed();
+
+	mixedConcentration = vector<double>(width * height, 0.0);
 }
 
 Maze::~Maze()
 {
-	if (rdSystem)
-		delete rdSystem;
-	rdSystem = nullptr;
+	if (rdSystem1)
+		delete rdSystem1;
+	rdSystem1 = nullptr;
+
+	if (rdSystem2)
+		delete rdSystem2;
+	rdSystem2 = nullptr;
 }
 
 void Maze::Upadate(float deltaTime)
@@ -181,7 +230,9 @@ void Maze::Upadate(float deltaTime)
 	if (!ValidCheck())
 		return;
 
-	rdSystem->Update();
+	rdSystem1->Update();
+	rdSystem2->Update();
+	MixRdSystem(deltaTime);
 }
 
 void Maze::Submit(std::string& submitBuf)
@@ -189,12 +240,63 @@ void Maze::Submit(std::string& submitBuf)
 	if (!ValidCheck())
 		return;
 
-	rdSystem->Submit(submitBuf);	
+	for (int i = 0; i < width * height; i++)
+	{
+		const double& d = mixedConcentration[i];
+		submitBuf[i] = (d > 0.35) ? '&' : (d > 0.25) ? '#' : (d > 0.185) ? '*' : (d > 0.10) ? '.' : ' ';
+	}
+}
+
+void Maze::MixRdSystem(float deltaTime)
+{
+	if (!ValidCheck())
+		return;
+
+	simulationSteps++;
+	if (simulationSteps >= MAX_SIMULATIOIN_STEPS && !transitioning)
+	{
+		transitioning = true;
+		transitionTime = 0.0f;
+	}
+
+	std::vector<double> concentration1 = rdSystem1->GetConcentration();
+	if (transitioning)
+	{
+		transitionTime += deltaTime;
+		float t = transitionTime / MAX_TRANSITION_DURATION;
+		t = std::clamp(t, 0.0f, 1.0f);
+
+		std::vector<double> concentration2 = rdSystem2->GetConcentration();
+		for (int i = 0; i < width * height; i++)
+		{
+			mixedConcentration[i] = concentration1[i] * (1.0f - t) + concentration2[i] * t;
+		}
+
+		if (t >= 1.0f)
+		{
+			std::swap(rdSystem1, rdSystem2);
+			simulationSteps = 0;
+			transitioning = false;
+			transitionTime = 0.0f;
+			rdSystem2->SetRandomSeed();
+		}
+	}
+	else
+	{
+		for (int i = 0; i < width * height; i++)
+		{
+			mixedConcentration[i] = concentration1[i];
+		}
+	}
 }
 
 bool Maze::ValidCheck()
 {
-	if (!rdSystem)
+	if (!rdSystem1)
 		return false;
+
+	if (!rdSystem2)
+		return false;
+
 	return true;
 }
