@@ -158,25 +158,8 @@ void Maze::ReactionDiffusion::Submit(string& submitBuf)
 	std::lock_guard<std::mutex> lock(dataMutex);
 	for (int i = 0; i < width * height; i++)
 	{
-		if (curB[i] > 0.5)
-		{
-			submitBuf[i] = '*';
-			continue;
-		}
-
-		if (curB[i] > 0.3)
-		{
-			submitBuf[i] = '%';
-			continue;
-		}
-
-		if (curB[i] > 0.1)
-		{
-			submitBuf[i] = '#';
-			continue;
-		}
-		
-		submitBuf[i] = ' ';
+		double d = curB[i];
+		submitBuf[i] = (d > 0.35) ? '&' : (d > 0.25) ? '#' : (d > 0.185) ? '*' : (d > 0.10) ? '.' : ' ';
 	}
 }
 
