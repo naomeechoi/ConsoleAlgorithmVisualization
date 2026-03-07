@@ -3,6 +3,7 @@
 #include <string>
 #include <mutex>
 #include <filesystem>
+#include <Windows.h>
 
 class Maze
 {
@@ -28,7 +29,6 @@ class Maze
 		void LoadParams(const std::string& path);
 		void WatchParamsThread();
 		void Update();
-		void Submit(std::string& submitBuf);
 		const std::vector<double>& GetConcentration();
 
 		int width = 0;
@@ -55,10 +55,14 @@ public:
 	Maze(int width, int height);
 	~Maze();
 
-	void Upadate(float deltaTime);
-	void Submit(std::string& summitBuf);
+	void Update(float deltaTime);
+	void Submit(std::vector<CHAR_INFO>& submitBuf);
+	const std::vector<double>& GetConcentration() const {
+		return mixedConcentration;
+	}
 
 private:
+	double ComputeLighting(int x, int y);
 	void MixRdSystem(float deltaTime);
 	bool ValidCheck();
 

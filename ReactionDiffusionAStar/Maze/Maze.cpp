@@ -2,13 +2,12 @@
 #include "Maze.h"
 #include <algorithm>
 #include <fstream>
-#include <Windows.h>
 #include <cmath>
 #include <ctime>
 
 using std::vector;
 using std::string;
-const int MAX_SIMULATIOIN_STEPS = 1000;
+const int MAX_SIMULATIOIN_STEPS = 500;
 const float MAX_TRANSITION_DURATION = 2.5f;
 
 static void InitialRand()
@@ -225,7 +224,7 @@ Maze::~Maze()
 	rdSystem2 = nullptr;
 }
 
-void Maze::Upadate(float deltaTime)
+void Maze::Update(float deltaTime)
 {
 	if (!ValidCheck())
 		return;
@@ -235,16 +234,78 @@ void Maze::Upadate(float deltaTime)
 	MixRdSystem(deltaTime);
 }
 
-void Maze::Submit(std::string& submitBuf)
+void Maze::Submit(std::vector<CHAR_INFO>& submitBuf)
 {
 	if (!ValidCheck())
 		return;
 
-	for (int i = 0; i < width * height; i++)
+	for (int y = 0; y < height; y++)
 	{
-		const double& d = mixedConcentration[i];
-		submitBuf[i] = (d > 0.35) ? '&' : (d > 0.25) ? '#' : (d > 0.185) ? '*' : (d > 0.10) ? '.' : ' ';
+		for (int x = 0; x < width; x++)
+		{
+			int i = y * width + x;
+
+			double d = mixedConcentration[i];
+			//double light = ComputeLighting(x, y);
+
+			//double shade = d * 0.7 + light * 0.3;
+
+			char c;
+			int color;
+			if (d > 0.35)
+			{
+				c = '&';
+				color = 15;
+			}
+			else if (d > 0.25)
+			{
+				c = '#';
+				color = 14;
+			}
+			else if (d > 0.185)
+			{
+				c = '*';
+				color = 11;
+			}
+			else if (d > 0.10)
+			{
+				c = '.';
+				color = 8;
+			}
+			else
+			{
+				c = ' ';
+				color = 0;
+			}
+
+			submitBuf[i].Char.AsciiChar = c;
+			submitBuf[i].Attributes = color;
+		}
 	}
+}
+
+double Maze::ComputeLighting(int x, int y)
+{
+	int idx = y * width + x;
+
+	double hL = mixedConcentration[rdSystem1->GetIdx(x - 1, y)];
+	double hR = mixedConcentration[rdSystem1->GetIdx(x + 1, y)];
+	double hD = mixedConcentration[rdSystem1->GetIdx(x, y - 1)];
+	double hU = mixedConcentration[rdSystem1->GetIdx(x, y + 1)];
+
+	double dx = hR - hL;
+	double dy = hU - hD;
+
+	// °£´ÜÇÑ light direction
+	double lightX = -0.6;
+	double lightY = -0.6;
+	double lightZ = 0.5;
+
+	double normalZ = 1.0;
+
+	double dot = dx * lightX + dy * lightY + normalZ * lightZ;
+
+	return std::max(0.0, std::min(1.0, dot));
 }
 
 void Maze::MixRdSystem(float deltaTime)
@@ -264,7 +325,6 @@ void Maze::MixRdSystem(float deltaTime)
 	{
 		transitionTime += deltaTime;
 		float t = transitionTime / MAX_TRANSITION_DURATION;
-		t = std::clamp(t, 0.0f, 1.0f);
 
 		std::vector<double> concentration2 = rdSystem2->GetConcentration();
 		for (int i = 0; i < width * height; i++)

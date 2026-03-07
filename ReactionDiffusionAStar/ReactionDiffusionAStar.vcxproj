@@ -77,14 +77,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Engine.cpp" />
+    <ClCompile Include="Input\MouseInput.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Maze\Maze.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="Sphere\Sphere.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Engine.h" />
+    <ClInclude Include="Input\MouseInput.h" />
     <ClInclude Include="Maze\Maze.h" />
     <ClInclude Include="Renderer\Renderer.h" />
+    <ClInclude Include="Sphere\Sphere.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

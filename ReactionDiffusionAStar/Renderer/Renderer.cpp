@@ -4,12 +4,22 @@
 #include <iostream>
 
 Renderer::Renderer(int x, int y, int width, int height)
-	:x(static_cast<short>(x)), y(static_cast<short>(y)), width(width), height(height), bufferStr(std::string(width * height, ' '))
+	:x(static_cast<short>(x)), y(static_cast<short>(y)), width(width), height(height)
 {
+    HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD mode = 0;
+    GetConsoleMode(hInput, &mode);
+
+    mode &= ~ENABLE_QUICK_EDIT_MODE;   // QuickEdit 끄기
+    mode &= ~ENABLE_INSERT_MODE;       // Insert 끄기
+    mode |= ENABLE_MOUSE_INPUT;        // 마우스 입력 활성화
+    SetConsoleMode(hInput, mode);
+
 	CONSOLE_CURSOR_INFO info = {};
-	info.dwSize = 1;
-	info.bVisible = false;
-	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
+    info.dwSize = 1;
+    info.bVisible = false;
+    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
+    buffer = std::vector<CHAR_INFO>(width * height);
 }
 
 Renderer::~Renderer()
@@ -17,25 +27,31 @@ Renderer::~Renderer()
 }
 
 
-void Renderer::Summit(int x, int y, char c)
+void Renderer::Submit(int x, int y, char c, WORD color)
 {
-	bufferStr[x + width * y] = c;
-}
-
-void Renderer::SetWholeBuffer(std::string& buf)
-{
-	bufferStr = std::move(buf);
+    int idx = x + width * y;
+    buffer[idx].Char.AsciiChar = c;
+    buffer[idx].Attributes = color;
 }
 
 void Renderer::Draw()
 {
-    static HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleCursorPosition(handle, { 0, 0 }); // 항상 화면 맨 위에서 시작
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    for (int i = 0; i < height; i++)
-    {
-        DWORD written;
-        WriteConsoleA(handle, bufferStr.data() + i * width, width, &written, nullptr);
-        WriteConsoleA(handle, "\r\n", 2, &written, nullptr); // 정확한 CR+LF 줄 바꿈
-    }
+    COORD bufferSize = { (short)width, (short)height };
+    COORD bufferCoord = { 0,0 };
+
+    SMALL_RECT region;
+    region.Left = 0;
+    region.Top = 0;
+    region.Right = width - 1;
+    region.Bottom = height - 1;
+
+    WriteConsoleOutputA(
+        handle,
+        buffer.data(),
+        bufferSize,
+        bufferCoord,
+        &region
+    );
 }

@@ -14,5 +14,10 @@ private:
 private:
 	class Renderer* renderer;
 	class Maze* maze;
+	class Sphere* sphere;
+	class MouseInput* mouseInput;
+
+	float yaw = 0.0f;
+	float pitch = 0.0f;
 };
 

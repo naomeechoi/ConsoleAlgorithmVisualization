@@ -1,84 +1,89 @@
+#define NOMINMAX
 #include "Engine.h"
 #include "Maze/Maze.h"
+#include "Sphere/Sphere.h"
+#include "Input/MouseInput.h"
 #include <Windows.h>
 #include <stdint.h>
 #include "Renderer/Renderer.h"
 
-const int WIDTH = 140;
-const int HEIGHT = 40;
-
-using std::string;
+const int WIDTH = 120;
+const int HEIGHT = 50;
 
 Engine::Engine()
 {
-	renderer = new Renderer(0, 0, WIDTH, HEIGHT);
-	maze = new Maze(WIDTH, HEIGHT);
+    renderer = new Renderer(0, 0, WIDTH, HEIGHT);
+    maze = new Maze(WIDTH, HEIGHT);
+    sphere = new Sphere(WIDTH, HEIGHT, 1.0f); // radius = 20
+    mouseInput = new MouseInput();
 }
 
 Engine::~Engine()
 {
-	if (renderer)
-	{
-		delete renderer;
-		renderer = nullptr;
-	}
-
-	if (maze)
-	{
-		delete maze;
-		maze = nullptr;
-	}
+    delete renderer;
+    delete maze;
+    delete sphere;
+    delete mouseInput;
 }
 
 void Engine::Run()
 {
-	LARGE_INTEGER frequency;
-	QueryPerformanceFrequency(&frequency);
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);
 
-	int64_t currentTime = 0;
-	int64_t previousTime = 0;
+    int64_t currentTime = 0;
+    int64_t previousTime = 0;
 
-	LARGE_INTEGER time;
-	QueryPerformanceCounter(&time);
+    LARGE_INTEGER time;
+    QueryPerformanceCounter(&time);
 
-	currentTime = time.QuadPart;
-	previousTime = currentTime;
+    currentTime = time.QuadPart;
+    previousTime = currentTime;
 
-	float oneFrameTime = 1.0f / 200.f; //TODO 하드 코딩 수정
-	while (true) // TODO 종료 시점 정하기
-	{
-		QueryPerformanceCounter(&time);
-		currentTime = time.QuadPart;
+    float oneFrameTime = 1.0f / 60.f;
 
-		float deltaTime
-			= static_cast<float>(currentTime - previousTime);
+    while (true)
+    {
+        QueryPerformanceCounter(&time);
+        currentTime = time.QuadPart;
 
-		deltaTime = deltaTime
-			/ static_cast<float>(frequency.QuadPart);
+        float deltaTime = static_cast<float>(currentTime - previousTime) / static_cast<float>(frequency.QuadPart);
 
-		if (deltaTime >= oneFrameTime)
-		{
-			Tick(deltaTime);
-			Submit();
-			Draw();
-			previousTime = currentTime;
-		}
-	}
+        if (deltaTime >= oneFrameTime)
+        {
+            Tick(deltaTime);
+            Submit();
+            Draw();
+            previousTime = currentTime;
+        }
+    }
 }
 
 void Engine::Tick(float deltaTime)
 {
-	maze->Upadate(deltaTime);
+    maze->Update(deltaTime);
+    mouseInput->Update();
+
+    const float SENSITIVITY = 0.01f;
+    float dx = mouseInput->GetYawDelta() * SENSITIVITY;
+    float dy = mouseInput->GetPitchDelta() * SENSITIVITY;
+
+    if (dx != 0.0f || dy != 0.0f) {
+        sphere->SetRotation(-dx, dy);
+    }
+
+    mouseInput->PostUpdate();
+    sphere->SetTexture(maze->GetConcentration());
 }
 
 void Engine::Submit()
 {
-	string buf = std::move(renderer->GetBuffer());
-	maze->Submit(buf);
-	renderer->SetWholeBuffer(buf);
+    auto& buf = renderer->GetBuffer();
+    int sphereSize = std::min(WIDTH, HEIGHT);
+    sphere->Submit(buf, WIDTH, HEIGHT);
 }
 
 void Engine::Draw()
 {
-	renderer->Draw();
+    renderer->Draw();
 }
