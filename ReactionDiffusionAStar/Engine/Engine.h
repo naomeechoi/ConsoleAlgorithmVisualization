@@ -15,6 +15,7 @@ private:
 	class Renderer* renderer;
 	class Maze* maze;
 	class Sphere* sphere;
+	class Cube* cube;
 	class MouseInput* mouseInput;
 
 	float yaw = 0.0f;

@@ -27,6 +27,15 @@
     <ClCompile Include="Maze\Maze.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Input\MouseInput.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh\Sphere\Sphere.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh\Cube\Cube.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Engine.h">
@@ -36,6 +45,15 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Maze\Maze.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\MouseInput.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh\Sphere\Sphere.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh\Cube\Cube.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

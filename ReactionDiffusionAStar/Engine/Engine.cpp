@@ -1,7 +1,8 @@
 #define NOMINMAX
 #include "Engine.h"
 #include "Maze/Maze.h"
-#include "Sphere/Sphere.h"
+#include "Mesh/Sphere/Sphere.h"
+#include "Mesh/Cube/Cube.h"
 #include "Input/MouseInput.h"
 #include <Windows.h>
 #include <stdint.h>
@@ -14,7 +15,8 @@ Engine::Engine()
 {
     renderer = new Renderer(0, 0, WIDTH, HEIGHT);
     maze = new Maze(WIDTH, HEIGHT);
-    sphere = new Sphere(WIDTH, HEIGHT, 1.0f); // radius = 20
+    sphere = new Sphere(WIDTH, HEIGHT, 1.0f);
+    cube = new Cube(WIDTH, HEIGHT, 1.0f);
     mouseInput = new MouseInput();
 }
 
@@ -23,6 +25,7 @@ Engine::~Engine()
     delete renderer;
     delete maze;
     delete sphere;
+    delete cube;
     delete mouseInput;
 }
 
@@ -69,18 +72,20 @@ void Engine::Tick(float deltaTime)
     float dy = mouseInput->GetPitchDelta() * SENSITIVITY;
 
     if (dx != 0.0f || dy != 0.0f) {
-        sphere->SetRotation(-dx, dy);
+        //sphere->SetRotation(-dx, dy);
+        cube->SetRotation(dx, -dy);
     }
 
     mouseInput->PostUpdate();
     sphere->SetTexture(maze->GetConcentration());
+    cube->SetTexture(maze->GetConcentration());
 }
 
 void Engine::Submit()
 {
     auto& buf = renderer->GetBuffer();
-    int sphereSize = std::min(WIDTH, HEIGHT);
-    sphere->Submit(buf, WIDTH, HEIGHT);
+    //sphere->Submit(buf, WIDTH, HEIGHT);
+    cube->Submit(buf, WIDTH, HEIGHT);
 }
 
 void Engine::Draw()
