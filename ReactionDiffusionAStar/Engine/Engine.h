@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 class Engine
 {
 public:
@@ -13,9 +14,10 @@ private:
 
 private:
 	class Renderer* renderer;
-	class Maze* maze;
+	class RDTexture* rdTexture;
 	class Sphere* sphere;
 	class Cube* cube;
+	class AStar* astar;
 	class MouseInput* mouseInput;
 
 	float yaw = 0.0f;

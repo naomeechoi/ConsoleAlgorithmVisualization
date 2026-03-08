@@ -1,8 +1,9 @@
 #define NOMINMAX
 #include "Engine.h"
-#include "Maze/Maze.h"
+#include "Texture/RDTexture.h"
 #include "Mesh/Sphere/Sphere.h"
 #include "Mesh/Cube/Cube.h"
+#include "AStar/AStar.h"
 #include "Input/MouseInput.h"
 #include <Windows.h>
 #include <stdint.h>
@@ -14,7 +15,7 @@ const int HEIGHT = 50;
 Engine::Engine()
 {
     renderer = new Renderer(0, 0, WIDTH, HEIGHT);
-    maze = new Maze(WIDTH, HEIGHT);
+    rdTexture = new RDTexture(WIDTH, HEIGHT);
     sphere = new Sphere(WIDTH, HEIGHT, 1.0f);
     cube = new Cube(WIDTH, HEIGHT, 1.0f);
     mouseInput = new MouseInput();
@@ -23,7 +24,7 @@ Engine::Engine()
 Engine::~Engine()
 {
     delete renderer;
-    delete maze;
+    delete rdTexture;
     delete sphere;
     delete cube;
     delete mouseInput;
@@ -64,7 +65,7 @@ void Engine::Run()
 
 void Engine::Tick(float deltaTime)
 {
-    maze->Update(deltaTime);
+    rdTexture->Update(deltaTime);
     mouseInput->Update();
 
     const float SENSITIVITY = 0.01f;
@@ -73,19 +74,20 @@ void Engine::Tick(float deltaTime)
 
     if (dx != 0.0f || dy != 0.0f) {
         //sphere->SetRotation(-dx, dy);
-        cube->SetRotation(dx, -dy);
+        //cube->SetRotation(dx, -dy);
     }
 
-    mouseInput->PostUpdate();
-    sphere->SetTexture(maze->GetConcentration());
-    cube->SetTexture(maze->GetConcentration());
+    //mouseInput->PostUpdate();
+    //sphere->SetTexture(rdTexture->GetConcentration());
+    //cube->SetTexture(rdTexture->GetConcentration());
 }
 
 void Engine::Submit()
 {
     auto& buf = renderer->GetBuffer();
+    rdTexture->Submit(buf);
     //sphere->Submit(buf, WIDTH, HEIGHT);
-    cube->Submit(buf, WIDTH, HEIGHT);
+    //cube->Submit(buf, WIDTH, HEIGHT);
 }
 
 void Engine::Draw()

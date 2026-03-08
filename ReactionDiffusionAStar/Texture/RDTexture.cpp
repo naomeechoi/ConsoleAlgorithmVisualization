@@ -1,5 +1,5 @@
 #define NOMINMAX
-#include "Maze.h"
+#include "RDTexture.h"
 #include <algorithm>
 #include <fstream>
 #include <cmath>
@@ -26,17 +26,17 @@ static int RandomIndex(int min, int max)
 	return min + rand() % (max - min + 1);
 }
 
-Maze::ReactionDiffusion::ReactionDiffusion(int width, int height)
+RDTexture::ReactionDiffusion::ReactionDiffusion(int width, int height)
 	:width(width), height(height), curA(width * height, 1.0), curB(width * height, 0.0), nextA(width* height), nextB(width* height)
 {
 	Params initial;
 	currentParams.store(initial);
 	LoadParams("Params.txt");
 
-	paramsThread = std::thread(&Maze::ReactionDiffusion::WatchParamsThread, this);
+	paramsThread = std::thread(&RDTexture::ReactionDiffusion::WatchParamsThread, this);
 }
 
-Maze::ReactionDiffusion::~ReactionDiffusion()
+RDTexture::ReactionDiffusion::~ReactionDiffusion()
 {
 	running = false;
 	if (paramsThread.joinable()) {
@@ -44,7 +44,7 @@ Maze::ReactionDiffusion::~ReactionDiffusion()
 	}
 }
 
-void Maze::ReactionDiffusion::SetRandomParams()
+void RDTexture::ReactionDiffusion::SetRandomParams()
 {
 	std::lock_guard<std::mutex> lock(paramsMutex);
 	if (!paramsList.empty())
@@ -57,7 +57,7 @@ void Maze::ReactionDiffusion::SetRandomParams()
 	}
 }
 
-void Maze::ReactionDiffusion::SetRandomSeed()
+void RDTexture::ReactionDiffusion::SetRandomSeed()
 {
 	SetRandomParams();
 
@@ -77,13 +77,13 @@ void Maze::ReactionDiffusion::SetRandomSeed()
 	}
 }
 
-int Maze::ReactionDiffusion::GetIdx(int x, int y)
+int RDTexture::ReactionDiffusion::GetIdx(int x, int y)
 {
 	//return y * width + x;
 	return ((y + height) % height) * width + ((x + width) % width);
 }
 
-bool Maze::ReactionDiffusion::IsFileUpdated(const string& path)
+bool RDTexture::ReactionDiffusion::IsFileUpdated(const string& path)
 {
 	auto ftime = std::filesystem::last_write_time(path);
 	if (ftime != lastWriteTime)
@@ -94,7 +94,7 @@ bool Maze::ReactionDiffusion::IsFileUpdated(const string& path)
 	return false; // 변경 없음
 }
 
-void Maze::ReactionDiffusion::LoadParams(const std::string& path)
+void RDTexture::ReactionDiffusion::LoadParams(const std::string& path)
 {
 	std::ifstream file("Params.txt");
 	if (!file.is_open())
@@ -137,7 +137,7 @@ void Maze::ReactionDiffusion::LoadParams(const std::string& path)
 	}
 }
 
-void Maze::ReactionDiffusion::WatchParamsThread()
+void RDTexture::ReactionDiffusion::WatchParamsThread()
 {
 	while (running)
 	{
@@ -149,7 +149,7 @@ void Maze::ReactionDiffusion::WatchParamsThread()
 	}
 }
 
-void Maze::ReactionDiffusion::Update()
+void RDTexture::ReactionDiffusion::Update()
 {
 	Params p = currentParams.load();
 
@@ -195,13 +195,13 @@ void Maze::ReactionDiffusion::Update()
 	}
 }
 
-const std::vector<double>& Maze::ReactionDiffusion::GetConcentration()
+const std::vector<double>& RDTexture::ReactionDiffusion::GetConcentration()
 {
 	std::lock_guard<std::mutex> lock(dataMutex);
 	return curB;
 }
 
-Maze::Maze(int width, int height)
+RDTexture::RDTexture(int width, int height)
 	: width(width), height(height)
 {
 	rdSystem1 = new ReactionDiffusion(width, height);
@@ -213,7 +213,7 @@ Maze::Maze(int width, int height)
 	mixedConcentration = vector<double>(width * height, 0.0);
 }
 
-Maze::~Maze()
+RDTexture::~RDTexture()
 {
 	if (rdSystem1)
 		delete rdSystem1;
@@ -224,7 +224,7 @@ Maze::~Maze()
 	rdSystem2 = nullptr;
 }
 
-void Maze::Update(float deltaTime)
+void RDTexture::Update(float deltaTime)
 {
 	if (!ValidCheck())
 		return;
@@ -234,7 +234,7 @@ void Maze::Update(float deltaTime)
 	MixRdSystem(deltaTime);
 }
 
-void Maze::Submit(std::vector<CHAR_INFO>& submitBuf)
+void RDTexture::Submit(std::vector<CHAR_INFO>& submitBuf)
 {
 	if (!ValidCheck())
 		return;
@@ -284,7 +284,7 @@ void Maze::Submit(std::vector<CHAR_INFO>& submitBuf)
 	}
 }
 
-double Maze::ComputeLighting(int x, int y)
+double RDTexture::ComputeLighting(int x, int y)
 {
 	int idx = y * width + x;
 
@@ -308,7 +308,7 @@ double Maze::ComputeLighting(int x, int y)
 	return std::max(0.0, std::min(1.0, dot));
 }
 
-void Maze::MixRdSystem(float deltaTime)
+void RDTexture::MixRdSystem(float deltaTime)
 {
 	if (!ValidCheck())
 		return;
@@ -350,7 +350,7 @@ void Maze::MixRdSystem(float deltaTime)
 	}
 }
 
-bool Maze::ValidCheck()
+bool RDTexture::ValidCheck()
 {
 	if (!rdSystem1)
 		return false;

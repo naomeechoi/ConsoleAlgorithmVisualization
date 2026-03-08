@@ -108,7 +108,7 @@ void Sphere::NormalToUV(float nx, float ny, float nz, float& u, float& v)
     //v = 1.0f - (ny + 1)/2;
 }
 
-void Sphere::Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHeight)
+void Sphere::Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHeight, const std::vector<int>& aiPos)
 {
     const float consoleCharAspect = 2.0f;
     float halfWidth = screenWidth / 2.0f;
@@ -162,11 +162,20 @@ void Sphere::Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenH
             double d = texture[idxInTexture];
 
             char c; int color;
-            if (d > 0.35) { c = '&'; color = 15; }
-            else if (d > 0.25) { c = '#'; color = 14; }
-            else if (d > 0.15) { c = '*'; color = 11; }
-            else if (d > 0.05) { c = '.'; color = 8; }
-            else { c = ' '; color = 0; }
+            if (tx == aiPos[0] && ty == aiPos[1]) {
+                c = '@';      // 구 표면에 그려질 AI 모양
+                color = 12;   // 빨간색
+            }
+            else {
+                int idxInTexture = tx + ty * texWidth;
+                double d = texture[idxInTexture];
+
+                if (d > 0.35) { c = '&'; color = 15; }
+                else if (d > 0.25) { c = '#'; color = 14; }
+                else if (d > 0.15) { c = '*'; color = 11; }
+                else if (d > 0.05) { c = '.'; color = 8; }
+                else { c = ' '; color = 0; }
+            }
 
             buffer[idx].Char.AsciiChar = c;
             buffer[idx].Attributes = (WORD)color;
