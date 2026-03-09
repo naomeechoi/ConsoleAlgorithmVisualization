@@ -1,36 +1,33 @@
+﻿#define NOMINMAX
 #include "AStar.h"
 #include <vector>
 #include <queue>
 #include <cmath>
 #include <utility>
 #include <cstdlib>
-
+#include <algorithm>
+const float PI = 3.14159265f;
 using namespace std;
 
-float AStar::Heuristic(int sx, int sy, int ex, int ey, float minCost)
+float AStar::Heuristic(int sx, int sy, int ex, int ey)
 {
-	return static_cast<float>((abs(sx - ex) + abs(sy - ey)) * minCost);
+	return static_cast<float>((abs(sx - ex) + abs(sy - ey)));
 }
 
-void AStar::GetNextPosListAndMinCost(int meshType, std::pair<int, int> curPos, std::vector<AStar::NextPos>&nextPosList, float& minCost)
+void AStar::GetNextPosListAndMinCost(std::pair<int, int> curPos, std::vector<AStar::NextPos>& nextPosList)
 {
-	if (meshType == 0)
+	vector<vector<int>> list = { {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1} };
+	for (int i = 0; i < list.size(); i++)
 	{
-		vector<vector<int>> list = { {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1} };
-		for (int i = 0; i < list.size(); i++)
-		{
-			AStar::NextPos next;
-			next.x = curPos.first + list[i][0];
-			next.y = curPos.second + list[i][1];
-			next.cost = (abs(list[i][0]) == abs(list[i][1])) ? 1.414f : 1.0f;
-			nextPosList.emplace_back(next);
-			minCost = min(minCost, next.cost);
-		}
+		AStar::NextPos next;
+		next.x = curPos.first + list[i][0];
+		next.y = curPos.second + list[i][1];
+		next.cost = (abs(list[i][0]) == abs(list[i][1])) ? 1.414f : 1.0f;
+		nextPosList.emplace_back(next);
 	}
 }
 
-
-std::pair<int, int> AStar::FindNextStepAStar(int sx, int sy, int ex, int ey, const std::vector<double>& densities, int type)
+std::pair<int, int> AStar::FindNextStepAStar(int sx, int sy, int ex, int ey, const std::vector<double>& densities)
 {
 	if (sx == ex && sy == ey)
 		return { sx, sy };
@@ -39,15 +36,16 @@ std::pair<int, int> AStar::FindNextStepAStar(int sx, int sy, int ex, int ey, con
 	vector<Node*> nodes;
 	vector<float> gScore(width * height, FLT_MAX);
 	std::vector<AStar::NextPos> nextPosList;
-	float minCost = FLT_MAX;
-	GetNextPosListAndMinCost(type, { sx, sy }, nextPosList, minCost);
+	GetNextPosListAndMinCost({ sx, sy }, nextPosList);
 
-	nodes.push_back(new Node{ sx, sy, 0.0f, Heuristic(sx, sy, ex, ey, minCost), nullptr });
+	nodes.push_back(new Node{ sx, sy, 0.0f, Heuristic(sx, sy, ex, ey), nullptr });
 	Node* startNode = nodes[0];
 	openList.push(startNode);
 	gScore[sy * width + sx] = 0;
 
 	Node* bestNode = startNode;
+
+	pair<int, int> result;
 	while (!openList.empty())
 	{
 		Node* current = openList.top();
@@ -62,14 +60,16 @@ std::pair<int, int> AStar::FindNextStepAStar(int sx, int sy, int ex, int ey, con
 				cur = prev;
 				prev = cur->parent;
 			}
-			return { cur->x, cur->y };
+			result.first = cur->x;
+			result.second = cur->y;
+			break;
 		}
 
 		if (current->h < bestNode->h)
 			bestNode = current;
 
 		nextPosList.clear();
-		GetNextPosListAndMinCost(type, { current->x, current->y }, nextPosList, minCost);
+		GetNextPosListAndMinCost({ current->x, current->y }, nextPosList);
 		for (const auto& nextPos : nextPosList)
 		{
 			if (nextPos.x < 0 || nextPos.x >= width || nextPos.y < 0 || nextPos.y >= height)
@@ -84,7 +84,7 @@ std::pair<int, int> AStar::FindNextStepAStar(int sx, int sy, int ex, int ey, con
 			if (newG < gScore[nextIdx])
 			{
 				gScore[nextIdx] = newG;
-				nodes.push_back(new Node{ nextPos.x, nextPos.y, newG, Heuristic(nextPos.x, nextPos.y, ex, ey, minCost), current });
+				nodes.push_back(new Node{ nextPos.x, nextPos.y, newG, Heuristic(nextPos.x, nextPos.y, ex, ey), current });
 				Node* newNode = nodes.back();
 				openList.push(newNode);
 
@@ -102,13 +102,13 @@ std::pair<int, int> AStar::FindNextStepAStar(int sx, int sy, int ex, int ey, con
 		prev = idx->parent;
 	}
 
-	int rx = idx->x;
-	int ry = idx->y;
+	result.first = idx->x;
+	result.second = idx->y;
 
 	for (Node* n : nodes)
 		delete n;
 
-	return { rx, ry };
+	return result;
 }
 
 void AStar::Submit(std::vector<CHAR_INFO>& buffer, int x, int y, int endX, int endY)
@@ -132,4 +132,63 @@ void AStar::Submit(std::vector<CHAR_INFO>& buffer, int x, int y, int endX, int e
 
 	buffer[idx].Char.AsciiChar = '@';
 	buffer[idx].Attributes = FOREGROUND_RED;
+}
+
+void AStar::SubmitOnSphere(std::vector<CHAR_INFO>& buffer,
+	const float radius,
+	const std::vector<float>& rot,
+	int x, int y, int endX, int endY)
+{
+	float screenAspectRatio = (float)width / (float)height;
+	const float consoleCharAspect = 2.0f;
+	float halfWidth = width / 2.0f;
+	float halfHeight = height / 2.0f;
+
+	for (int sy = 0; sy < height; sy++)
+	{
+		for (int sx = 0; sx < width; sx++)
+		{
+			float nx = ((sx - halfWidth) / halfWidth) * screenAspectRatio / consoleCharAspect;
+			float ny = (sy - halfHeight) / halfHeight;
+			float lengthSq = nx * nx + ny * ny;
+
+			if (lengthSq > radius * radius) continue;
+
+			float nz = sqrt(radius * radius - lengthSq);
+
+			float nxRot = nx * rot[0] + ny * rot[1] + nz * rot[2];
+			float nyRot = nx * rot[3] + ny * rot[4] + nz * rot[5];
+			float nzRot = nx * rot[6] + ny * rot[7] + nz * rot[8];
+
+			float u = 0.5f + atan2(nzRot, nxRot) / (2.0f * PI);
+			float v = 0.5f - asin(nyRot / radius) / PI;
+
+			int tx = std::clamp(int(u * width), 0, width - 1);
+			int ty = std::clamp(int(v * height), 0, height - 1);
+
+			int bufferIdx = sx + sy * width;
+
+			auto getWrappedDist = [&](int tX, int tY, int targetX, int targetY) {
+				float dx = fabsf((float)tX - targetX);
+				// X축 차이가 화면 너비의 절반보다 크면 반대쪽으로 도는 게 더 가깝다.
+				if (dx > width / 2.0f) {
+					dx = (float)width - dx;
+				}
+				float dy = fabsf((float)tY - targetY);
+				return sqrtf(dx * dx + dy * dy);
+				};
+
+			if (getWrappedDist(tx, ty, endX, endY) < 2.0f)
+			{
+				buffer[bufferIdx].Char.AsciiChar = '!';
+				buffer[bufferIdx].Attributes = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+			}
+
+			if (getWrappedDist(tx, ty, x, y) < 2.0f)
+			{
+				buffer[bufferIdx].Char.AsciiChar = '@';
+				buffer[bufferIdx].Attributes = FOREGROUND_RED | FOREGROUND_INTENSITY;
+			}
+		}
+	}
 }

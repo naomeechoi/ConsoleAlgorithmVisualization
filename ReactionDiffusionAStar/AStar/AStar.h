@@ -31,24 +31,25 @@ class AStar
 	};
 
 public:
-	AStar(int width, int height)
-		:width(width), height(height)
+	AStar(int width, int height, int type)
+		:width(width), height(height), type(type)
 	{
 	};
 	~AStar() = default;
 
 	std::pair<int, int> FindNextStepAStar(int sx, int sy,
 		int ex, int ey,
-		const std::vector<double>& densities,
-		int type);
+		const std::vector<double>& densities);
 	void Submit(std::vector<CHAR_INFO>& buffer,int x, int y, int endX, int endY);
-
+	void SubmitOnSphere(std::vector<CHAR_INFO>& buffer, const float radius, const std::vector<float>& rot, int x, int y, int endX, int endY);
+	void SetRotation(float dx, float dy);
 private:
-	float Heuristic(int sx, int sy, int ex, int ey, float minCost);
+	float Heuristic(int sx, int sy, int ex, int ey);
 
-	void GetNextPosListAndMinCost(int meshType, std::pair<int, int> curPos, std::vector<AStar::NextPos>& nextPosList, float& minCost);
+	void GetNextPosListAndMinCost(std::pair<int, int> curPos, std::vector<AStar::NextPos>& nextPosList);
 
 private:
 	int width = 0;
 	int height = 0;
+	int type = 0;
 };

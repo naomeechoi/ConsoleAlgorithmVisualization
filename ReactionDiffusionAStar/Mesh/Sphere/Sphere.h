@@ -10,13 +10,14 @@ public:
     void SetTexture(const std::vector<double>& texture);
     void SetRotation(float yaw, float pitch);
     void Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHeight);
+    const float GetRadius() const { return radius; };
+    const std::vector<float>& GetRotation() const { return rot; };
 
 private:
     int texWidth;
     int texHeight;
     float radius;
-    float rot[9] = { 1, 0, 0,  0, 1, 0,  0, 0, 1 };
-
+    std::vector<float> rot = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
     std::vector<double> texture; // Reaction Diffusion 텍스처
 
     // 내부 유틸: normal → UV 변환

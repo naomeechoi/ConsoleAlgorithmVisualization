@@ -1,6 +1,7 @@
 #define NOMINMAX
 #include "Sphere.h"
 #include <cmath>
+#include <vector>
 #include <algorithm>
 
 const float PI = 3.14159265f;
@@ -32,8 +33,7 @@ void Sphere::SetRotation(float dx, float dy)
     float cosX = cos(dx), sinX = sin(dx);
     float cosY = cos(dy), sinY = sin(dy);
 
-    float prev[9];
-    std::copy(rot, rot + 9, prev);
+    std::vector<float> prev(rot.begin(), rot.end());
 
     /* y축 기준 회전
     [cosθ, 0,  sinθ]
@@ -53,7 +53,7 @@ void Sphere::SetRotation(float dx, float dy)
     rot[8] = prev[6] * sinX + prev[8] * cosX;
 
     // 누적
-    std::copy(rot, rot + 9, prev);
+    prev.assign(rot.begin(), rot.end());
 
     /* x축 기준 회전
     [1,  0,    0   ]

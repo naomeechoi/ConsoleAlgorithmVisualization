@@ -43,7 +43,7 @@ Engine::Engine()
     plane = new Plane(WIDTH, HEIGHT);
     sphere = new Sphere(WIDTH, HEIGHT, 1.0f);
     cube = new Cube(WIDTH, HEIGHT, 1.0f);
-    astar = new AStar(WIDTH, HEIGHT);
+    astar = new AStar(WIDTH, HEIGHT, 1);
     mouseInput = new MouseInput();
 
     astarEndX = RandomIndex(0, WIDTH - 1);
@@ -113,7 +113,7 @@ void Engine::Tick(float deltaTime)
     sphere->SetTexture(rdTexture->GetConcentration());
     //cube->SetTexture(rdTexture->GetConcentration());
 
-    /*
+    
     if (astarX == astarEndX && astarY == astarEndY)
     {
         astarEndX = RandomIndex(0, WIDTH - 1);
@@ -124,10 +124,10 @@ void Engine::Tick(float deltaTime)
     if (astarMoveTimer >= ASTAR_MOVE_INTERVAL)
     {
         astarMoveTimer = 0.0f;
-        std::pair<int, int> nextPos = astar->FindNextStepAStar(astarX, astarY, astarEndX, astarEndY, rdTexture->GetConcentration(), 0);
+        std::pair<int, int> nextPos = astar->FindNextStepAStar(astarX, astarY, astarEndX, astarEndY, rdTexture->GetConcentration());
         astarX = nextPos.first;
         astarY = nextPos.second;
-    }*/
+    }
 }
 
 void Engine::Submit()
@@ -136,7 +136,8 @@ void Engine::Submit()
     //plane->Submit(buf);
     sphere->Submit(buf, WIDTH, HEIGHT);
     //cube->Submit(buf, WIDTH, HEIGHT);
-   // astar->Submit(buf, astarX, astarY, astarEndX, astarEndY);
+    //astar->Submit(buf, astarX, astarY, astarEndX, astarEndY);
+    astar->SubmitOnSphere(buf, sphere->GetRadius(), sphere->GetRotation(), astarX, astarY, astarEndX, astarEndY);
 }
 
 void Engine::Draw()
