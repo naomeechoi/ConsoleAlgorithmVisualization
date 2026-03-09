@@ -43,11 +43,16 @@ Engine::Engine()
     plane = new Plane(WIDTH, HEIGHT);
     sphere = new Sphere(WIDTH, HEIGHT, 1.0f);
     cube = new Cube(WIDTH, HEIGHT, 1.0f);
-    astar = new AStar(WIDTH, HEIGHT, 1);
+    astar = new AStar(WIDTH, HEIGHT, 2);
     mouseInput = new MouseInput();
 
-    astarEndX = RandomIndex(0, WIDTH - 1);
-    astarEndY = RandomIndex(0, HEIGHT - 1);
+    std::pair<int, int> startPos = GetRandomCubePos();
+    astarX = startPos.first;
+    astarY = startPos.second;
+
+    std::pair<int, int> endPos = GetRandomCubePos();
+    astarEndX = endPos.first;
+    astarEndY = endPos.second;
 }
 
 Engine::~Engine()
@@ -94,6 +99,16 @@ void Engine::Run()
     }
 }
 
+std::pair<int, int> Engine::GetRandomCubePos()
+{
+    int x, y;
+    do {
+        x = RandomIndex(0, WIDTH - 1);
+        y = RandomIndex(0, HEIGHT - 1);
+    } while (!astar->IsCubeAtlasValid(x, y));
+    return { x, y };
+}
+
 void Engine::Tick(float deltaTime)
 {
     rdTexture->Update(deltaTime);
@@ -104,20 +119,21 @@ void Engine::Tick(float deltaTime)
     float dy = mouseInput->GetPitchDelta() * SENSITIVITY;
 
     if (dx != 0.0f || dy != 0.0f) {
-        sphere->SetRotation(-dx, dy);
-        //cube->SetRotation(dx, -dy);
+        //sphere->SetRotation(-dx, dy);
+        cube->SetRotation(dx, -dy);
     }
 
     mouseInput->PostUpdate();
     //plane->SetTexture(rdTexture->GetConcentration());
-    sphere->SetTexture(rdTexture->GetConcentration());
-    //cube->SetTexture(rdTexture->GetConcentration());
+    //sphere->SetTexture(rdTexture->GetConcentration());
+    cube->SetTexture(rdTexture->GetConcentration());
 
     
     if (astarX == astarEndX && astarY == astarEndY)
     {
-        astarEndX = RandomIndex(0, WIDTH - 1);
-        astarEndY = RandomIndex(0, HEIGHT - 1);
+        std::pair<int, int> endPos = GetRandomCubePos();
+        astarEndX = endPos.first;
+        astarEndY = endPos.second;
     }
 
     astarMoveTimer += deltaTime;
@@ -134,10 +150,10 @@ void Engine::Submit()
 {
     auto& buf = renderer->GetBuffer();
     //plane->Submit(buf);
-    sphere->Submit(buf, WIDTH, HEIGHT);
-    //cube->Submit(buf, WIDTH, HEIGHT);
-    //astar->Submit(buf, astarX, astarY, astarEndX, astarEndY);
-    astar->SubmitOnSphere(buf, sphere->GetRadius(), sphere->GetRotation(), astarX, astarY, astarEndX, astarEndY);
+    //sphere->Submit(buf, WIDTH, HEIGHT);
+    cube->Submit(buf, WIDTH, HEIGHT, astarX, astarY, astarEndX, astarEndY);
+    //astar->SubmitOnCube(buf, cube, astarX, astarY, astarEndX, astarEndY);
+    //astar->SubmitOnSphere(buf, sphere->GetRadius(), sphere->GetRotation(), astarX, astarY, astarEndX, astarEndY);
 }
 
 void Engine::Draw()

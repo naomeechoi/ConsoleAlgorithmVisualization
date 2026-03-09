@@ -6,24 +6,147 @@
 #include <utility>
 #include <cstdlib>
 #include <algorithm>
+#include <Mesh/Cube/Cube.h>
 const float PI = 3.14159265f;
 using namespace std;
+
+int AStar::GetFace(int x, int y)
+{
+	int fx = x / faceSize();
+	int fy = y / faceSize();
+
+	// 십자가 전개도의 중앙 가로줄
+	if (fy == 1) {
+		if (fx == 0) return 1; // FACE_NEG_X (왼쪽)
+		if (fx == 1) return 4; // FACE_Z (정면)
+		if (fx == 2) return 0; // FACE_X (오른쪽)
+		if (fx == 3) return 5; // FACE_NEG_Z (뒷면)
+	}
+
+	// 위/아래 면
+	if (fx == 1 && fy == 0) return 2; // FACE_Y (위쪽)
+	if (fx == 1 && fy == 2) return 3; // FACE_NEG_Y (아래쪽)
+
+	return -1;
+}
+
+std::tuple<float, float, float> AStar::AtlasTo3D(int x, int y)
+{
+	int face = GetFace(x, y);
+	int fs = faceSize();
+	int lx = x % fs;
+	int ly = y % fs;
+
+	// [0,fs-1] -> [-1, 1] 범위로 변환
+	float u = (float)lx / (fs - 1) * 2.0f - 1.0f;
+	float v = (float)ly / (fs - 1) * 2.0f - 1.0f;
+
+	// 각 면이 3D 큐브 모서리에서 완벽히 맞닿도록 v 부호 수정 (-v 적용)
+	switch (face) {
+	case 0: return { 1.0f, -v, -u };     // FACE_X
+	case 1: return { -1.0f, -v, u };     // FACE_NEG_X  
+	case 2: return { u, 1.0f, v };       // FACE_Y
+	case 3: return { u, -1.0f, -v };     // FACE_NEG_Y
+	case 4: return { u, -v, 1.0f };      // FACE_Z
+	case 5: return { -u, -v, -1.0f };    // FACE_NEG_Z
+	default: return { 0, 0, 0 };
+	}
+}
+bool AStar::ValidateTransition(int fromX, int fromY, int toX, int toY)
+{
+	if (type != 2) return true; // 큐브 모드가 아니면 항상 유효
+
+	auto [x1, y1, z1] = AtlasTo3D(fromX, fromY);
+	auto [x2, y2, z2] = AtlasTo3D(toX, toY);
+
+	// 3D 공간에서 실제 거리 계산
+	float dist3D = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
+
+	// 인접한 픽셀은 3D에서도 가까워야 함 (임계값 조정 가능)
+	return dist3D < 0.5f;
+}
 
 float AStar::Heuristic(int sx, int sy, int ex, int ey)
 {
 	return static_cast<float>((abs(sx - ex) + abs(sy - ey)));
 }
 
+bool AStar::IsCubeAtlasValid(int x, int y) const {
+	if (type != 2) return true;
+	int fx = x / (width / 4);
+	int fy = y / (height / 3);
+	if (fy == 1) return true;
+	if (fx == 1 && (fy == 0 || fy == 2)) return true;
+	return false;
+}
+
 void AStar::GetNextPosListAndMinCost(std::pair<int, int> curPos, std::vector<AStar::NextPos>& nextPosList)
 {
-	vector<vector<int>> list = { {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1} };
+	int fs = faceSize();
+	int cx = curPos.first;
+	int cy = curPos.second;
+	int curFace = GetFace(cx, cy);
+	int lx = cx % fs; // 면 내부 x (0 ~ fs-1)
+	int ly = cy % fs; // 면 내부 y (0 ~ fs-1)
+
+	// 8방향 탐색
+	vector<vector<int>> list = { {-1,0},{1,0},{0,-1},{0,1},{-1,-1},{-1,1},{1,-1},{1,1} };
+
 	for (int i = 0; i < list.size(); i++)
 	{
-		AStar::NextPos next;
-		next.x = curPos.first + list[i][0];
-		next.y = curPos.second + list[i][1];
-		next.cost = (abs(list[i][0]) == abs(list[i][1])) ? 1.414f : 1.0f;
-		nextPosList.emplace_back(next);
+		int nx = cx + list[i][0];
+		int ny = cy + list[i][1];
+
+		// 아틀라스 범위를 벗어나거나 '빈 공간(Invalid)'으로 가는 경우 면 전환 처리
+		if (!IsCubeAtlasValid(nx, ny))
+		{
+			switch (curFace)
+			{
+			case 1: // FACE_NEG_X (0, 1)
+				if (nx < 0) { nx = 4 * fs - 1; ny = cy; } // 왼쪽 -> -Z 오른쪽 끝
+				else if (ny < fs) { nx = fs; ny = lx; } // 위 -> Y 왼쪽 끝
+				else if (ny >= 2 * fs) { nx = fs; ny = 3 * fs - 1 - lx; } // 아래 -> -Y 왼쪽 끝
+				break;
+
+			case 4: // FACE_Z (1, 1)
+				// 정면은 상하좌우가 모두 유효한 면으로 둘러싸여 있어 대각선 이탈만 발생함
+				continue;
+
+			case 0: // FACE_X (2, 1)
+				if (nx >= 3 * fs) { nx = 3 * fs; ny = cy; } // 오른쪽 -> -Z 왼쪽 끝
+				else if (ny < fs) { nx = 2 * fs - 1; ny = fs - 1 - lx; } // 위 -> Y 오른쪽 끝
+				else if (ny >= 2 * fs) { nx = 2 * fs - 1; ny = 2 * fs + lx; } // 아래 -> -Y 오른쪽 끝
+				break;
+
+			case 5: // FACE_NEG_Z (3, 1)
+				if (nx >= 4 * fs) { nx = 0; ny = cy; } // 오른쪽 -> -X 왼쪽 끝
+				else if (ny < fs) { nx = 2 * fs - 1 - lx; ny = 0; } // 위 -> Y 위쪽 끝
+				else if (ny >= 2 * fs) { nx = 2 * fs - 1 - lx; ny = 3 * fs - 1; } // 아래 -> -Y 아래쪽 끝
+				break;
+
+			case 2: // FACE_Y (1, 0)
+				if (ny < 0) { nx = 4 * fs - 1 - lx; ny = fs; } // 위 -> -Z 위쪽 끝 (뒤집힘)
+				else if (nx < fs) { nx = ly; ny = fs; } // 왼쪽 -> -X 위쪽 끝
+				else if (nx >= 2 * fs) { nx = 2 * fs - 1 - ly; ny = fs; } // 오른쪽 -> X 위쪽 끝
+				break;
+
+			case 3: // FACE_NEG_Y (1, 2)
+				if (ny >= 3 * fs) { nx = 4 * fs - 1 - lx; ny = 2 * fs - 1; } // 아래 -> -Z 아래쪽 끝
+				else if (nx < fs) { nx = 2 * fs - 1 - ly; ny = 2 * fs - 1; } // 왼쪽 -> -X 아래쪽 끝
+				else if (nx >= 2 * fs) { nx = fs + ly; ny = 2 * fs - 1; } // 오른쪽 -> X 아래쪽 끝
+				break;
+			}
+		}
+
+		// 최종 유효성 검사
+		if (nx < 0 || ny < 0 || nx >= width || ny >= height || !IsCubeAtlasValid(nx, ny))
+			continue;
+
+		AStar::NextPos res;
+		res.x = nx;
+		res.y = ny;
+		res.cost = (abs(list[i][0]) == abs(list[i][1])) ? 1.414f : 1.0f;
+		nextPosList.emplace_back(res);
 	}
 }
 
@@ -36,7 +159,6 @@ std::pair<int, int> AStar::FindNextStepAStar(int sx, int sy, int ex, int ey, con
 	vector<Node*> nodes;
 	vector<float> gScore(width * height, FLT_MAX);
 	std::vector<AStar::NextPos> nextPosList;
-	GetNextPosListAndMinCost({ sx, sy }, nextPosList);
 
 	nodes.push_back(new Node{ sx, sy, 0.0f, Heuristic(sx, sy, ex, ey), nullptr });
 	Node* startNode = nodes[0];

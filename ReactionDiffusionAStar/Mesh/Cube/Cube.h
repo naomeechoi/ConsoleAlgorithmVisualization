@@ -4,6 +4,7 @@
 
 class Cube
 {
+public:
     enum Face
     {
         FACE_X,
@@ -22,9 +23,9 @@ public:
 
     void SetRotation(float dx, float dy);
 
-    void Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHeight);
+    void Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHeight,
+        int astarX =-1, int astarY =-1, int endX =-1, int endY =-1);
 
-private:
 
     Face FaceUV(float px, float py, float pz, float& u, float& v);
 

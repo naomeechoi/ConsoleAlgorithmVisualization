@@ -107,7 +107,8 @@ Cube::Face Cube::FaceUV(float px, float py, float pz, float& u, float& v)
     }
 }
 
-void Cube::Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHeight)
+void Cube::Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHeight,
+    int astarX /*=-1*/, int astarY /*=-1*/, int endX /*=-1*/, int endY /*=-1*/)
 {
     const float consoleCharAspect = 2.0f;
 
@@ -117,6 +118,21 @@ void Cube::Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHei
     float screenAspectRatio = (float)screenWidth / (float)screenHeight;
 
     float rayOriginZ = -2.7f;
+
+    float astarU = (astarX >= 0) ? (float)astarX / texWidth : -1.0f;
+    float astarV = (astarY >= 0) ? (float)astarY / texHeight : -1.0f;
+    float endU = (endX >= 0) ? (float)endX / texWidth : -1.0f;
+    float endV = (endY >= 0) ? (float)endY / texHeight : -1.0f;
+
+    const WORD faceBackgrounds[] = {
+        BACKGROUND_RED,                           // FACE_X (빨강)
+        BACKGROUND_RED | BACKGROUND_INTENSITY,    // FACE_NEG_X (연빨강)
+        BACKGROUND_GREEN,                         // FACE_Y (초록)
+        BACKGROUND_GREEN | BACKGROUND_INTENSITY,  // FACE_NEG_Y (연초록)
+        BACKGROUND_BLUE,                          // FACE_Z (파랑)
+        BACKGROUND_BLUE | BACKGROUND_INTENSITY    // FACE_NEG_Z (연파랑)
+    };
+
 
     for (int y = 0; y < screenHeight; y++)
     {
@@ -239,10 +255,22 @@ void Cube::Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHei
             else if (d > 0.05) { c = '.'; color = 8; }
             else { c = ' '; color = 0; }
 
+            WORD finalAttributes = color | faceBackgrounds[face];
+
             if (isEdge) color = 1;
 
+            auto isNear = [](float u1, float v1, float u2, float v2, float threshold = 0.02f) {
+                return fabs(u1 - u2) < threshold && fabs(v1 - v2) < threshold;
+                };
+            if (astarX >= 0 && astarY >= 0 && isNear(texU, texV, astarU, astarV)) {
+                c = '@'; finalAttributes = FOREGROUND_RED | FOREGROUND_INTENSITY;
+            }
+            if (endX >= 0 && endY >= 0 && isNear(texU, texV, endU, endV)) {
+                c = '!'; finalAttributes = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+            }
+
             buffer[idx].Char.AsciiChar = c;
-            buffer[idx].Attributes = (WORD)color;
+            buffer[idx].Attributes = (WORD)finalAttributes;
         }
     }
 }
