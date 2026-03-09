@@ -80,6 +80,7 @@
     <ClCompile Include="Engine\Engine.cpp" />
     <ClCompile Include="Input\MouseInput.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Mesh\Plane\Plane.cpp" />
     <ClCompile Include="Texture\RDTexture.cpp" />
     <ClCompile Include="Mesh\Cube\Cube.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
@@ -89,6 +90,7 @@
     <ClInclude Include="AStar\AStar.h" />
     <ClInclude Include="Engine\Engine.h" />
     <ClInclude Include="Input\MouseInput.h" />
+    <ClInclude Include="Mesh\Plane\Plane.h" />
     <ClInclude Include="Texture\RDTexture.h" />
     <ClInclude Include="Mesh\Cube\Cube.h" />
     <ClInclude Include="Renderer\Renderer.h" />

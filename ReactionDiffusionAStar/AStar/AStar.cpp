@@ -19,7 +19,7 @@ std::pair<int, int> AStar::FindNextStepAStar(int sx, int sy, int ex, int ey, con
 		return { sx, sy };
 
 	priority_queue <Node*, vector<Node*>, CompareNode> openList;
-	vector<Node> nodes(1024);
+	vector<Node> nodes;
 	vector<float> gScore(width * height, FLT_MAX);
 
 	nodes.push_back({ sx, sy, 0.0f, Heuristic(sx, sy, ex, ey, minCost), nullptr });

@@ -15,6 +15,7 @@ private:
 private:
 	class Renderer* renderer;
 	class RDTexture* rdTexture;
+	class Plane* plane;
 	class Sphere* sphere;
 	class Cube* cube;
 	class AStar* astar;

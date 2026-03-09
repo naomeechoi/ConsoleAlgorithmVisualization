@@ -246,9 +246,6 @@ void RDTexture::Submit(std::vector<CHAR_INFO>& submitBuf)
 			int i = y * width + x;
 
 			double d = mixedConcentration[i];
-			//double light = ComputeLighting(x, y);
-
-			//double shade = d * 0.7 + light * 0.3;
 
 			char c;
 			int color;

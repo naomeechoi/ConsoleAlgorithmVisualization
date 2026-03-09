@@ -4,17 +4,18 @@ class AStar
 {
 	struct Node
 	{
+		Node(int x, int y, float g, float h, Node* parent)
+			:x(x), y(y), g(g), h(h), parent(parent)
+		{
+		};
+
+		float f() const { return g + h; }
+
 		int x = 0;
 		int y = 0;
 		float g = 0.0f;
 		float h = 0.0f;
 		Node* parent = nullptr;
-
-		Node(int x, int y, float g, float h, Node* parent)
-			:x(x), y(y), g(g), h(h), parent(parent)
-		{
-		};
-		float f() const { return g + h; }
 	};
 
 	struct NextPos

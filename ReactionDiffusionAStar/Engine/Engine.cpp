@@ -1,6 +1,7 @@
 #define NOMINMAX
 #include "Engine.h"
 #include "Texture/RDTexture.h"
+#include "Mesh/Plane/Plane.h"
 #include "Mesh/Sphere/Sphere.h"
 #include "Mesh/Cube/Cube.h"
 #include "AStar/AStar.h"
@@ -10,12 +11,13 @@
 #include "Renderer/Renderer.h"
 
 const int WIDTH = 120;
-const int HEIGHT = 50;
+const int HEIGHT = 40;
 
 Engine::Engine()
 {
     renderer = new Renderer(0, 0, WIDTH, HEIGHT);
     rdTexture = new RDTexture(WIDTH, HEIGHT);
+    plane = new Plane(WIDTH, HEIGHT);
     sphere = new Sphere(WIDTH, HEIGHT, 1.0f);
     cube = new Cube(WIDTH, HEIGHT, 1.0f);
     mouseInput = new MouseInput();
@@ -25,6 +27,7 @@ Engine::~Engine()
 {
     delete renderer;
     delete rdTexture;
+    delete plane;
     delete sphere;
     delete cube;
     delete mouseInput;
@@ -78,6 +81,7 @@ void Engine::Tick(float deltaTime)
     }
 
     //mouseInput->PostUpdate();
+    plane->SetTexture(rdTexture->GetConcentration());
     //sphere->SetTexture(rdTexture->GetConcentration());
     //cube->SetTexture(rdTexture->GetConcentration());
 }
@@ -85,7 +89,7 @@ void Engine::Tick(float deltaTime)
 void Engine::Submit()
 {
     auto& buf = renderer->GetBuffer();
-    rdTexture->Submit(buf);
+    plane->Submit(buf);
     //sphere->Submit(buf, WIDTH, HEIGHT);
     //cube->Submit(buf, WIDTH, HEIGHT);
 }
