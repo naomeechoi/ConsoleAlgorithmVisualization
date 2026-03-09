@@ -23,5 +23,11 @@ private:
 
 	float yaw = 0.0f;
 	float pitch = 0.0f;
+
+	int astarX = 0;
+	int astarY = 0;
+	int astarEndX = 0;
+	int astarEndY = 0;
+	float astarMoveTimer = 0.0f;
 };
 

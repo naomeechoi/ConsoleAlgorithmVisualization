@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <Windows.h>
 class AStar
 {
 	struct Node
@@ -29,19 +30,23 @@ class AStar
 		bool operator()(Node* a, Node* b) { return a->f() > b->f(); }
 	};
 
+public:
 	AStar(int width, int height)
 		:width(width), height(height)
 	{
 	};
 	~AStar() = default;
 
-	float Heuristic(int sx, int sy, int ex, int ey, float minCost);
-
 	std::pair<int, int> FindNextStepAStar(int sx, int sy,
 		int ex, int ey,
 		const std::vector<double>& densities,
-		const std::vector<NextPos>& directions,
-		float minCost);
+		int type);
+	void Submit(std::vector<CHAR_INFO>& buffer,int x, int y, int endX, int endY);
+
+private:
+	float Heuristic(int sx, int sy, int ex, int ey, float minCost);
+
+	void GetNextPosListAndMinCost(int meshType, std::pair<int, int> curPos, std::vector<AStar::NextPos>& nextPosList, float& minCost);
 
 private:
 	int width = 0;

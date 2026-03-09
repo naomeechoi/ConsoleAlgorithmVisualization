@@ -7,7 +7,7 @@
 
 using std::vector;
 using std::string;
-const int MAX_SIMULATIOIN_STEPS = 500;
+const int MAX_SIMULATIOIN_STEPS = 200;
 const float MAX_TRANSITION_DURATION = 2.5f;
 
 static void InitialRand()

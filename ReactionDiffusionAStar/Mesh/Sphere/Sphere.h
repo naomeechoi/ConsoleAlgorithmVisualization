@@ -9,7 +9,7 @@ public:
 
     void SetTexture(const std::vector<double>& texture);
     void SetRotation(float yaw, float pitch);
-    void Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHeight, const std::vector<int>& aiPos);
+    void Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHeight);
 
 private:
     int texWidth;
