@@ -30,42 +30,6 @@ int AStar::GetFace(int x, int y)
 	return -1;
 }
 
-std::tuple<float, float, float> AStar::AtlasTo3D(int x, int y)
-{
-	int face = GetFace(x, y);
-	int fs = faceSize();
-	int lx = x % fs;
-	int ly = y % fs;
-
-	// [0,fs-1] -> [-1, 1] 범위로 변환
-	float u = (float)lx / (fs - 1) * 2.0f - 1.0f;
-	float v = (float)ly / (fs - 1) * 2.0f - 1.0f;
-
-	// 각 면이 3D 큐브 모서리에서 완벽히 맞닿도록 v 부호 수정 (-v 적용)
-	switch (face) {
-	case 0: return { 1.0f, -v, -u };     // FACE_X
-	case 1: return { -1.0f, -v, u };     // FACE_NEG_X  
-	case 2: return { u, 1.0f, v };       // FACE_Y
-	case 3: return { u, -1.0f, -v };     // FACE_NEG_Y
-	case 4: return { u, -v, 1.0f };      // FACE_Z
-	case 5: return { -u, -v, -1.0f };    // FACE_NEG_Z
-	default: return { 0, 0, 0 };
-	}
-}
-bool AStar::ValidateTransition(int fromX, int fromY, int toX, int toY)
-{
-	if (type != 2) return true; // 큐브 모드가 아니면 항상 유효
-
-	auto [x1, y1, z1] = AtlasTo3D(fromX, fromY);
-	auto [x2, y2, z2] = AtlasTo3D(toX, toY);
-
-	// 3D 공간에서 실제 거리 계산
-	float dist3D = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
-
-	// 인접한 픽셀은 3D에서도 가까워야 함 (임계값 조정 가능)
-	return dist3D < 0.5f;
-}
-
 float AStar::Heuristic(int sx, int sy, int ex, int ey)
 {
 	return static_cast<float>((abs(sx - ex) + abs(sy - ey)));
@@ -89,63 +53,218 @@ void AStar::GetNextPosListAndMinCost(std::pair<int, int> curPos, std::vector<ASt
 	int lx = cx % fs; // 면 내부 x (0 ~ fs-1)
 	int ly = cy % fs; // 면 내부 y (0 ~ fs-1)
 
+
 	// 8방향 탐색
 	vector<vector<int>> list = { {-1,0},{1,0},{0,-1},{0,1},{-1,-1},{-1,1},{1,-1},{1,1} };
 
 	for (int i = 0; i < list.size(); i++)
 	{
+		AStar::NextPos res;
+		res.cost = (abs(list[i][0]) == abs(list[i][1])) ? 1.414f : 1.0f;
+
 		int nx = cx + list[i][0];
 		int ny = cy + list[i][1];
 
-		// 아틀라스 범위를 벗어나거나 '빈 공간(Invalid)'으로 가는 경우 면 전환 처리
-		if (!IsCubeAtlasValid(nx, ny))
+		if (type == 2)
 		{
-			switch (curFace)
+			if (abs(cy - height) < 3 && cx >= width / 4 && cx < width / 2) { // 파랑색 면(중앙)으로 올라가려는 시도라면
+
+				float t = 1.0f - (cx - width / 4.0f) / (width / 4.0f);
+
+				float newX = (width / 4.0f) * t + width / 4.0f * 3.0f;
+				float newY = (height / 3.0f * 2.0f) - 5;
+
+				nx = (int)newX;
+				ny = (int)newY;
+				res.cost = 0;
+				res.x = nx;
+				res.y = ny;
+				nextPosList.emplace_back(res);
+				return;
+			}
+
+			if (list[i][0] == 1)
 			{
-			case 1: // FACE_NEG_X (0, 1)
-				if (nx < 0) { nx = 4 * fs - 1; ny = cy; } // 왼쪽 -> -Z 오른쪽 끝
-				else if (ny < fs) { nx = fs; ny = lx; } // 위 -> Y 왼쪽 끝
-				else if (ny >= 2 * fs) { nx = fs; ny = 3 * fs - 1 - lx; } // 아래 -> -Y 왼쪽 끝
-				break;
+				//초록 오룬쪽 모서리에서 빨강 위쪽
+				if (abs(cx - width / 4 * 2) < 2 && cy >= 0 && cy <= height / 3)
+				{
+					float t = 1.0f - (cy / (height / 3.0f));
 
-			case 4: // FACE_Z (1, 1)
-				// 정면은 상하좌우가 모두 유효한 면으로 둘러싸여 있어 대각선 이탈만 발생함
-				continue;
+					float newX = width / 4.0f * 2 + t * (width / 4.0f);
+					float newY = height / 3.0f;
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				// 연초록 오른쪽에서 빨강 아래쪽
+				else if (abs(cx - width / 4 * 2) < 2 && cy >= height / 3 * 2 && cy < height)
+				{
+					float t = 1.0f - ((cy - height * 2 / 3) / (height / 3));
 
-			case 0: // FACE_X (2, 1)
-				if (nx >= 3 * fs) { nx = 3 * fs; ny = cy; } // 오른쪽 -> -Z 왼쪽 끝
-				else if (ny < fs) { nx = 2 * fs - 1; ny = fs - 1 - lx; } // 위 -> Y 오른쪽 끝
-				else if (ny >= 2 * fs) { nx = 2 * fs - 1; ny = 2 * fs + lx; } // 아래 -> -Y 오른쪽 끝
-				break;
+					float newX = width / 4.0f * 2 + t * (width / 4.0f);
+					float newY = height / 3.0f * 2;
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				// 연파랑에서 연빨강
+				else if (abs(cx - width) < 2 && cy >= height / 3 && cy < height / 3 * 2)
+				{
+					nx = 0;
+					ny = cy;
+				}
+			}
+			else if (list[i][0] == -1)
+			{
+				// 초록 왼쪽에서 연빨강 위쪽
+				if (abs(cx - width / 4) < 2 && cy >= 0 && cy <= height / 3)
+				{
+					float t = (cy / (height / 3.0f));
 
-			case 5: // FACE_NEG_Z (3, 1)
-				if (nx >= 4 * fs) { nx = 0; ny = cy; } // 오른쪽 -> -X 왼쪽 끝
-				else if (ny < fs) { nx = 2 * fs - 1 - lx; ny = 0; } // 위 -> Y 위쪽 끝
-				else if (ny >= 2 * fs) { nx = 2 * fs - 1 - lx; ny = 3 * fs - 1; } // 아래 -> -Y 아래쪽 끝
-				break;
+					float newX = 0 + t * (width / 4.0f);
+					float newY = height / 3.0f;
 
-			case 2: // FACE_Y (1, 0)
-				if (ny < 0) { nx = 4 * fs - 1 - lx; ny = fs; } // 위 -> -Z 위쪽 끝 (뒤집힘)
-				else if (nx < fs) { nx = ly; ny = fs; } // 왼쪽 -> -X 위쪽 끝
-				else if (nx >= 2 * fs) { nx = 2 * fs - 1 - ly; ny = fs; } // 오른쪽 -> X 위쪽 끝
-				break;
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				// 연초록 왼쪽에서 연빨강 아래쪽
+				else if (abs(cx - width / 4) < 2 && cy >= height / 3 * 2 && cy < height)
+				{
+					float t = ((cy - height * 2 / 3) / (height / 3));
 
-			case 3: // FACE_NEG_Y (1, 2)
-				if (ny >= 3 * fs) { nx = 4 * fs - 1 - lx; ny = 2 * fs - 1; } // 아래 -> -Z 아래쪽 끝
-				else if (nx < fs) { nx = 2 * fs - 1 - ly; ny = 2 * fs - 1; } // 왼쪽 -> -X 아래쪽 끝
-				else if (nx >= 2 * fs) { nx = fs + ly; ny = 2 * fs - 1; } // 오른쪽 -> X 아래쪽 끝
-				break;
+					float newX = t * (width / 4.0f);
+					float newY = height / 3.0f * 2;
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				// 연빨강에서 연파랑
+				else if (abs(cx - 0) < 2 && cy >= height / 3 && cy < height / 3 * 2)
+				{
+					nx = width - 1;
+					ny = cy;
+				}
+			}
+
+			if (list[i][1] == -1)
+			{
+				// 빨강 위쪽 모서리에서 초록색 오른쪽
+				if (abs(cy - height / 3) < 2 && cx >= width / 4 * 2 && cx <= width / 4 * 3)
+				{
+					float t = 1.0f - ((cx - width / 4.0f * 2) / (width / 4.0f));
+
+					float newX = width * 2 / 4;
+					float newY = t * (height / 3.0f);
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				// 연빨강 위쪽에서 초록색 왼쪽
+				else if (abs(cy - height / 3) < 2 && cx >= 0 && cx <= width / 4)
+				{
+					float t = (cx / (width / 4.0f));
+
+					float newX = width / 4.0f;
+					float newY = 0 + t * (height / 3.0f);
+
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				// 연파랑 위쪽에서 초록 위쪽
+				else if (abs(cy - height / 3) < 2 && cx >= width / 4 * 3 && cx < width)
+				{
+					float t = 1.0f - ((cx - width / 4.0f * 3.0f) / (width / 4.0f));
+
+					float newX = (width / 4.0f) * t + width / 4.0f;
+					float newY = 0;
+
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				else if (abs(cy - 0) < 2 && cx >= width / 4 && cx < width / 2)
+				{
+					float t = 1.0f - ((cx - width / 4.0f) / (width / 4.0f));
+
+					float newX = width / 4.0f * 3 + t * (width / 4.0f);
+					float newY = height / 3.0f;
+
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				// 연초록(NEG_Y) 면의 위쪽 경계 (y = height * 2/3 근처)에서 파랑 하드 코딩
+				else if (abs(cy - (height / 3 * 2)) < 2 && cx >= width / 4 && cx < width / 2)
+				{
+					// 연초록의 x좌표 비율을 그대로 파랑의 x좌표로 전달
+					float t = (cx - (width / 4.0f)) / (width / 4.0f);
+
+					nx = (int)(width / 4.0f + t * (width / 4.0f));
+					ny = (int)(height / 3.0f * 2.0f - 1); // 파랑의 맨 아랫줄로 진입
+				}
+
+			}
+			else if (list[i][1] == 1)
+			{
+				// 빨강 아래쪽에서 연초록 오른쪽
+				if (abs(cy - height / 3 * 2) < 2 && cx >= width / 2 && cx < width / 4 * 3)
+				{
+					float t = 1.0f - ((cx - width / 2.0f) / (width / 4.0f));
+
+					float newX = width / 2.0f;
+					float newY = height / 3.0f * 2 + t * (height / 3.0f);
+
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				// 연빨강 아래쪽에서 연초록 왼쪽
+				else if (abs(cy - height / 3 * 2) < 2 && cx >= 0 && cx < width / 4)
+				{
+					float t = (cx / (width / 4.0f));
+
+					float newX = width / 4.0f;
+					float newY = height / 3.0f * 2 + t * (height / 3.0f);
+
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				// 연파랑 아래쪽에서 연초록 아래쪽
+				else if (abs(cy - height / 3 * 2) < 2 && cx >= width / 4 * 3 && cx < width)
+				{
+					float t = ((cx - width / 4.0f * 3.0f) / (width / 4.0f));
+
+					float newX = (width / 4.0f) * t + width / 4.0f;
+					float newY = height - 5;
+
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				// 연초록 아래쪽 연파랑 아래쪽
+				else if (abs(cy - height) < 2 && cx >= width / 4 && cx < width / 4 * 2)
+				{
+					float t = 1.0f - (cx - width / 4.0f) / (width / 4.0f);
+
+					float newX = (width / 4.0f) * t + width / 4.0f * 3.0f;
+					float newY = (height / 3.0f * 2.0f) - 5;
+
+					nx = (int)newX;
+					ny = (int)newY;
+				}
+				// 파랑에서 연초록 하드코딩
+				else if (abs(cy - (height / 3 * 2)) < 2 && cx >= width / 4 && cx < width / 2)
+				{
+					// 파랑의 x좌표 비율을 그대로 연초록의 x좌표로 전달
+					float t = (cx - (width / 4.0f)) / (width / 4.0f);
+
+					nx = (int)(width / 4.0f + t * (width / 4.0f));
+					ny = (int)(height / 3.0f * 2.0f + 1); // 연초록의 맨 윗줄로 진입
+				}
 			}
 		}
 
+		//if (type == 2 && !IsCubeAtlasValid(nx, ny))
+		//	continue;
 		// 최종 유효성 검사
-		if (nx < 0 || ny < 0 || nx >= width || ny >= height || !IsCubeAtlasValid(nx, ny))
+		if (nx < 0 || ny < 0 || nx >= width || ny >= height)
 			continue;
 
-		AStar::NextPos res;
+		
 		res.x = nx;
 		res.y = ny;
-		res.cost = (abs(list[i][0]) == abs(list[i][1])) ? 1.414f : 1.0f;
 		nextPosList.emplace_back(res);
 	}
 }
@@ -192,6 +311,8 @@ std::pair<int, int> AStar::FindNextStepAStar(int sx, int sy, int ex, int ey, con
 
 		nextPosList.clear();
 		GetNextPosListAndMinCost({ current->x, current->y }, nextPosList);
+
+
 		for (const auto& nextPos : nextPosList)
 		{
 			if (nextPos.x < 0 || nextPos.x >= width || nextPos.y < 0 || nextPos.y >= height)

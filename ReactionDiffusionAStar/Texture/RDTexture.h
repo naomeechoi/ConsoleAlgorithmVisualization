@@ -60,6 +60,17 @@ public:
 	const std::vector<double>& GetConcentration() const {
 		return mixedConcentration;
 	}
+	void TestBufferClear()
+	{
+		for (int i = 0; i < height; i++)
+		{
+			for (int j = 0; j < width; j++)
+			{
+				int idx = j + i * width;
+				mixedConcentration[idx] = 0.0f;
+			}
+		}
+	}
 
 private:
 	double ComputeLighting(int x, int y);

@@ -56,11 +56,9 @@ public:
 	void SubmitOnSphere(std::vector<CHAR_INFO>& buffer, const float radius, const std::vector<float>& rot, int x, int y, int endX, int endY);
 	bool IsCubeAtlasValid(int x, int y) const;
 private:
-	std::tuple<float, float, float>  AtlasTo3D(int x, int y);
 	int faceSize() const { return std::min(width / 4, height / 3); }
 	int GetFace(int x, int y);
 	float Heuristic(int sx, int sy, int ex, int ey);
-	bool ValidateTransition(int fromX, int fromY, int toX, int toY);
 
 	void GetNextPosListAndMinCost(std::pair<int, int> curPos, std::vector<AStar::NextPos>& nextPosList);
 

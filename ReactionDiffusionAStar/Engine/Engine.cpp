@@ -140,6 +140,7 @@ void Engine::Tick(float deltaTime)
     if (astarMoveTimer >= ASTAR_MOVE_INTERVAL)
     {
         astarMoveTimer = 0.0f;
+        //rdTexture->TestBufferClear();
         std::pair<int, int> nextPos = astar->FindNextStepAStar(astarX, astarY, astarEndX, astarEndY, rdTexture->GetConcentration());
         astarX = nextPos.first;
         astarY = nextPos.second;

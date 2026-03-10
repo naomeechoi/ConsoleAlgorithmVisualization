@@ -78,31 +78,63 @@ void Cube::SetRotation(float dx, float dy)
     }
 }
 
+//Cube::Face Cube::FaceUV(float px, float py, float pz, float& u, float& v)
+//{
+//    float ax = fabs(px), ay = fabs(py), az = fabs(pz);
+//
+//    // 레이가 정육면체에 닿았다는 것은
+//    // x축, 혹은 y축, z축 면에 닿았다는 뜻이다.
+//    // 각 축에 면은 두개가 있다.
+//    // 그리고 그 최소 최대값은 -size, size이다.
+//    // 만약 px가 -1이거나 1이면 x축 한 면에 닿았다는 뜻이다.
+//    // 그러나 부동소수점은 딱 떨어지는 정수값을 보장하지 않으므로
+//    // 다른 값보다 큰 상태인 비교한다.
+//    if (ax >= ay && ax >= az)
+//    { // X면
+//        u = (pz / size + 1.0f) * 0.5f;
+//        v = (py / size + 1.0f) * 0.5f;
+//        return (px > 0) ? FACE_X : FACE_NEG_X;
+//    }
+//    else if (ay >= ax && ay >= az) { // Y면
+//        u = (px / size + 1.0f) * 0.5f;
+//        v = (pz / size + 1.0f) * 0.5f;
+//        return (py > 0) ? FACE_Y : FACE_NEG_Y;
+//    }
+//    else { // Z면
+//        u = (px / size + 1.0f) * 0.5f;
+//        v = (py / size + 1.0f) * 0.5f;
+//        return (pz > 0) ? FACE_Z : FACE_NEG_Z;
+//    }
+//}
+
 Cube::Face Cube::FaceUV(float px, float py, float pz, float& u, float& v)
 {
     float ax = fabs(px), ay = fabs(py), az = fabs(pz);
+    float s = size;
 
-    // 레이가 정육면체에 닿았다는 것은
-    // x축, 혹은 y축, z축 면에 닿았다는 뜻이다.
-    // 각 축에 면은 두개가 있다.
-    // 그리고 그 최소 최대값은 -size, size이다.
-    // 만약 px가 -1이거나 1이면 x축 한 면에 닿았다는 뜻이다.
-    // 그러나 부동소수점은 딱 떨어지는 정수값을 보장하지 않으므로
-    // 다른 값보다 큰 상태인 비교한다.
-    if (ax >= ay && ax >= az)
-    { // X면
-        u = (pz / size + 1.0f) * 0.5f;
-        v = (py / size + 1.0f) * 0.5f;
+    if (ax >= ay && ax >= az) // X면 (빨강, 연빨강)
+    {
+        // 핵심: px의 부호에 따라 pz의 방향을 통일시켜 가로 띠의 연속성 확보
+        u = (px > 0) ? (1.0f - (pz / s + 1.0f) * 0.5f) : ((pz / s + 1.0f) * 0.5f);
+        v = (py / s + 1.0f) * 0.5f;
         return (px > 0) ? FACE_X : FACE_NEG_X;
     }
-    else if (ay >= ax && ay >= az) { // Y면
-        u = (px / size + 1.0f) * 0.5f;
-        v = (pz / size + 1.0f) * 0.5f;
-        return (py > 0) ? FACE_Y : FACE_NEG_Y;
+    else if (ay >= ax && ay >= az) // Y면 (초록, 연초록)
+    {
+        float tempU = (pz / s + 1.0f) * 0.5f;
+        float tempV = (px / s + 1.0f) * 0.5f;
+
+        // 2. 방향 반전 (추가적인 180도 효과로 270도 완성)
+        // 어느 축을 뒤집느냐에 따라 90도인지 270도인지 결정됩니다.
+        u = tempV;          // 원래 v가 u가 됨
+        v = tempU;   // 원래 u가 뒤집혀서 v가 됨
+
+        return (py > 0) ? FACE_NEG_Y : FACE_Y;
     }
-    else { // Z면
-        u = (px / size + 1.0f) * 0.5f;
-        v = (py / size + 1.0f) * 0.5f;
+    else // Z면 (파랑, 연파랑)
+    {
+        u = (pz > 0) ? ((px / s + 1.0f) * 0.5f) : (1.0f - (px / s + 1.0f) * 0.5f);
+        v = (py / s + 1.0f) * 0.5f;
         return (pz > 0) ? FACE_Z : FACE_NEG_Z;
     }
 }
@@ -134,7 +166,7 @@ void Cube::Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHei
     };
 
 
-    for (int y = 0; y < screenHeight; y++)
+    for (int y = 0; y < screenHeight; y++) 
     {
         for (int x = 0; x < screenWidth; x++)
         {
@@ -255,7 +287,7 @@ void Cube::Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHei
             else if (d > 0.05) { c = '.'; color = 8; }
             else { c = ' '; color = 0; }
 
-            WORD finalAttributes = color | faceBackgrounds[face];
+            WORD finalAttributes = color /* | faceBackgrounds[face]*/;
 
             if (isEdge) color = 1;
 
