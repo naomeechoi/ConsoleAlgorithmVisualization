@@ -16,6 +16,8 @@ namespace RenderEngine
 		void Draw();
 		std::vector<CHAR_INFO>& GetBuffer() { return buffer; }
 		static Renderer& Get();
+		inline int GetScreenWidth() { return width; };
+		inline int GetScreenHeight() { return height; };
 	private:
 		int width = 0;
 		int height = 0;

@@ -1,7 +1,7 @@
 #define NOMINMAX
 #include "Engine.h"
 #include "Texture/RDTexture.h"
-#include "Mesh/Plane/Plane.h"
+#include "Mesh/Plane/PlaneMesh.h"
 #include "Mesh/Sphere/Sphere.h"
 #include "Mesh/Cube/Cube.h"
 #include "AStar/AStar.h"
@@ -38,9 +38,8 @@ const int HEIGHT = 40;
 
 Engine::Engine()
 {
-    renderer = new Renderer(0, 0, WIDTH, HEIGHT);
     rdTexture = new RDTexture(WIDTH, HEIGHT);
-    plane = new Plane(WIDTH, HEIGHT);
+    //plane = new PlaneMesh(WIDTH, HEIGHT);
     sphere = new Sphere(WIDTH, HEIGHT, 1.0f);
     cube = new Cube(WIDTH, HEIGHT, 1.0f);
     astar = new AStar(WIDTH, HEIGHT, 2);
@@ -149,15 +148,15 @@ void Engine::Tick(float deltaTime)
 
 void Engine::Submit()
 {
-    auto& buf = renderer->GetBuffer();
+    //auto& buf = renderer->GetBuffer();
     //plane->Submit(buf);
     //sphere->Submit(buf, WIDTH, HEIGHT);
-    cube->Submit(buf, WIDTH, HEIGHT, astarX, astarY, astarEndX, astarEndY);
+    //cube->Submit(buf, WIDTH, HEIGHT, astarX, astarY, astarEndX, astarEndY);
     //astar->SubmitOnCube(buf, cube, astarX, astarY, astarEndX, astarEndY);
     //astar->SubmitOnSphere(buf, sphere->GetRadius(), sphere->GetRotation(), astarX, astarY, astarEndX, astarEndY);
 }
 
 void Engine::Draw()
 {
-    renderer->Draw();
+    //renderer->Draw();
 }

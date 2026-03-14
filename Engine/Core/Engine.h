@@ -4,6 +4,7 @@
 
 namespace RenderEngine
 {
+	class Level;
 	class NAOMI_API Engine
 	{
 		struct EngineSetting
@@ -18,7 +19,7 @@ namespace RenderEngine
 		~Engine();
 		void Run();
 		void Quit() { isQuit = true; };
-		void SetLevel();
+		void SetLevel(Level* level);
 
 	protected:
 		class Renderer* renderer = nullptr;
@@ -33,5 +34,8 @@ namespace RenderEngine
 		std::string trim(const std::string& str);
 		void Tick(float deltaTime);
 		void Draw();
+
+	private:
+		Level* mainLevel = nullptr;
 	};
 }

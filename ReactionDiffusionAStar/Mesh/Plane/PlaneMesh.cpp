@@ -1,11 +1,6 @@
-#include "Plane.h"
+#include "PlaneMesh.h"
 
-void Plane::SetTexture(const std::vector<double>& texture)
-{
-    this->texture = texture;
-}
-
-void Plane::Submit(std::vector<CHAR_INFO>& buffer)
+void PlaneMesh::UpdateTexture()
 {
 	for (int y = 0; y < height; y++)
 	{
@@ -43,8 +38,8 @@ void Plane::Submit(std::vector<CHAR_INFO>& buffer)
 				color = 0;
 			}
 
-			buffer[i].Char.AsciiChar = c;
-			buffer[i].Attributes = color;
+			finalBuffer[i].Char.AsciiChar = c;
+			finalBuffer[i].Attributes = color;
 		}
 	}
 }

@@ -11,14 +11,16 @@ namespace RenderEngine
         Mesh(int width, int height)
             : width(width), height(height)
         {
+            texture.assign(width * height, 0.0);
+            finalBuffer.resize(width * height);
         };
         ~Mesh() = default;
 
-        virtual void SetTexture(const std::vector<double>& texture);
+        void SetTexture(const std::vector<double>& texture);
         virtual void UpdateTexture();
-        std::vector<CHAR_INFO>& GetFinalBuffer();
+        std::vector<CHAR_INFO> GetFinalBuffer();
 
-    private:
+    protected:
         int width;
         int height;
         std::vector<double> texture;

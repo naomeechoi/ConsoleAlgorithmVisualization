@@ -20,21 +20,37 @@ namespace RenderEngine
 
 	void Actor::Tick(float deltaTime)
 	{
+		if (mesh)
+			mesh->UpdateTexture();
 	}
 
 	void Actor::Draw()
 	{
-		std::weak_ptr<Mesh> mesh;
-
-		if (auto locked = mesh.lock())
-		{
-			Renderer::Get().Submit(std::move(locked->GetFinalBuffer()));
-			locked->GetFinalBuffer();
-		}
+		if(mesh)
+			Renderer::Get().Submit(std::move(mesh->GetFinalBuffer()));
 	}
 
-	void Actor::SetOwner(std::weak_ptr<Level> newOwner)
+	void Actor::SetOwner(Level* newOwner)
 	{
 		owner = newOwner;
+	}
+
+	void Actor::OnDestroy()
+	{
+	}
+
+	void Actor::SetTexture(const std::vector<double>& texture)
+	{
+		if (mesh)
+			mesh->SetTexture(texture);
+	}
+
+	void Actor::Destroy()
+	{
+		// 삭제 플래그 설정.
+		destroyRequested = true;
+
+		// 삭제 이벤트 호출.
+		OnDestroy();
 	}
 }

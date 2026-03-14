@@ -8,6 +8,7 @@
 #include <ctime>
 #include "Renderer/Renderer.h"
 #include "Util/Random.h"
+#include "World/Level.h"
 
 namespace RenderEngine
 {
@@ -108,22 +109,29 @@ namespace RenderEngine
                 Tick(deltaTime);
                 Draw();
                 previousTime = currentTime;
+
+                if (mainLevel)
+                    mainLevel->ProcessAddAndDestroyActors();
             }
         }
     }
 
-    void Engine::SetLevel()
+    void Engine::SetLevel(Level* level)
     {
+        mainLevel = level;
     }
 
     void Engine::Tick(float deltaTime)
     {
-        /*level->Draw(); */
+        if(mainLevel)
+            mainLevel->Tick(deltaTime);
     }
 
     void Engine::Draw()
     {
-        //levelManager->Draw();
-        //renderer->Draw();
+        if (mainLevel)
+            mainLevel->Draw();
+        if (renderer)
+            renderer->Draw();
     }
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "Common/Common.h"
 #include <memory>
+#include <vector>
 
 namespace RenderEngine
 {
@@ -16,10 +17,21 @@ namespace RenderEngine
 		virtual void Tick(float deltaTime);
 		virtual void Draw();
 
-		void SetOwner(std::weak_ptr<Level> newOwner);
+		void SetOwner(Level* newOwner);
+		inline bool DestroyRequested() const
+		{
+			return destroyRequested;
+		}
+		virtual void OnDestroy();
+
+		void SetTexture(const std::vector<double>& texture);
+
 	private:
-		std::weak_ptr<class Mesh> mesh;
-		std::weak_ptr<Level> owner;
+		void Destroy();
+	protected:
+		class Mesh* mesh;
+		Level* owner;
+		bool destroyRequested = false;
 	};
 }
 

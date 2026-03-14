@@ -81,24 +81,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Actor\Plane.cpp" />
     <ClCompile Include="AStar\AStar.cpp" />
     <ClCompile Include="Engine\Engine.cpp" />
     <ClCompile Include="Input\MouseInput.cpp" />
+    <ClCompile Include="Level\MainLevel.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Mesh\Plane\Plane.cpp" />
+    <ClCompile Include="Mesh\Plane\PlaneMesh.cpp" />
     <ClCompile Include="Texture\RDTexture.cpp" />
     <ClCompile Include="Mesh\Cube\Cube.cpp" />
-    <ClCompile Include="Renderer\Renderer.cpp" />
     <ClCompile Include="Mesh\Sphere\Sphere.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Actor\Plane.h" />
     <ClInclude Include="AStar\AStar.h" />
     <ClInclude Include="Engine\Engine.h" />
     <ClInclude Include="Input\MouseInput.h" />
-    <ClInclude Include="Mesh\Plane\Plane.h" />
+    <ClInclude Include="Level\MainLevel.h" />
+    <ClInclude Include="Mesh\Plane\PlaneMesh.h" />
     <ClInclude Include="Texture\RDTexture.h" />
     <ClInclude Include="Mesh\Cube\Cube.h" />
-    <ClInclude Include="Renderer\Renderer.h" />
     <ClInclude Include="Mesh\Sphere\Sphere.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
