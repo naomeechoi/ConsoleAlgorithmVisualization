@@ -287,7 +287,7 @@ void Cube::Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenHei
             else if (d > 0.05) { c = '.'; color = 8; }
             else { c = ' '; color = 0; }
 
-            WORD finalAttributes = color /* | faceBackgrounds[face]*/;
+            WORD finalAttributes = color  | faceBackgrounds[face];
 
             if (isEdge) color = 1;
 

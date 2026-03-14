@@ -1,4 +1,5 @@
-#include "Engine/Engine.h"
+#include "Core/Engine.h"
+using namespace RenderEngine;
 
 int main()
 {

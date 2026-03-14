@@ -148,7 +148,7 @@ void Sphere::Submit(std::vector<CHAR_INFO>& buffer, int screenWidth, int screenH
             float nzAfterRot = nx * rot[6] + ny * rot[7] + nz * rot[8];
 
             float u = 0;
-            float v = 0;;
+            float v = 0;
             NormalToUV(nxAfterRot, nyAfterRot, nzAfterRot, u, v);
 
             // 구해온 u, v 즉 0~1 범위로 정규화된 점에 다시 width, height를 곱해주면

@@ -11,17 +11,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>17.0</VCProjectVersion>
+    <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{07ca28ed-53e9-4a53-b6c1-39cb21c8adf8}</ProjectGuid>
-    <RootNamespace>ReactionDiffusionAStar</RootNamespace>
+    <ProjectGuid>{838d09f9-0e18-4454-a738-0e94fd0d4393}</ProjectGuid>
+    <RootNamespace>Engine</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -51,19 +51,20 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ENGINE_BUILD_DLL;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\;..\Includes\Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\Library\Engine\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Engine.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy *.h ..\Includes\Engine\ /e /y</Command>
+    </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy ..\Library\Engine\$(Platform)\$(Configuration)\Engine.dll $(OutDir)\ /y /i</Command>
+      <Command>xcopy "$(OutDir)\Engine.dll" "..\Library\Engine\$(Platform)\$(Configuration)\" /y /i</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -74,6 +75,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -81,25 +83,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AStar\AStar.cpp" />
-    <ClCompile Include="Engine\Engine.cpp" />
-    <ClCompile Include="Input\MouseInput.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Mesh\Plane\Plane.cpp" />
-    <ClCompile Include="Texture\RDTexture.cpp" />
-    <ClCompile Include="Mesh\Cube\Cube.cpp" />
-    <ClCompile Include="Renderer\Renderer.cpp" />
-    <ClCompile Include="Mesh\Sphere\Sphere.cpp" />
+    <ClInclude Include="Common\Common.h" />
+    <ClInclude Include="Core\Engine.h" />
+    <ClInclude Include="Renderer\Renderer.h" />
+    <ClInclude Include="Util\Random.h" />
+    <ClInclude Include="World\Actor.h" />
+    <ClInclude Include="World\Level.h" />
+    <ClInclude Include="World\Mesh.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AStar\AStar.h" />
-    <ClInclude Include="Engine\Engine.h" />
-    <ClInclude Include="Input\MouseInput.h" />
-    <ClInclude Include="Mesh\Plane\Plane.h" />
-    <ClInclude Include="Texture\RDTexture.h" />
-    <ClInclude Include="Mesh\Cube\Cube.h" />
-    <ClInclude Include="Renderer\Renderer.h" />
-    <ClInclude Include="Mesh\Sphere\Sphere.h" />
+    <ClCompile Include="Core\Engine.cpp" />
+    <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="World\Actor.cpp" />
+    <ClCompile Include="World\Level.cpp" />
+    <ClCompile Include="World\Mesh.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
