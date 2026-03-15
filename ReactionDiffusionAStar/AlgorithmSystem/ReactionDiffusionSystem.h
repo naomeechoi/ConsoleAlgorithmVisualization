@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <Windows.h>
 
-class RDTexture
+class ReactionDiffusionSystem
 {
 	struct ReactionDiffusion
 	{
@@ -52,8 +52,8 @@ class RDTexture
 	};
 
 public:
-	RDTexture(int width, int height);
-	~RDTexture();
+	ReactionDiffusionSystem(int width, int height);
+	~ReactionDiffusionSystem();
 
 	void Update(float deltaTime);
 	void Submit(std::vector<CHAR_INFO>& submitBuf);

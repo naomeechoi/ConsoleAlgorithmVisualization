@@ -63,6 +63,11 @@ namespace RenderEngine
 		}
 	}
 
+	void Level::AddNewActorImmediately(Actor* newActor)
+	{
+		actors.emplace_back(newActor);
+	}
+
 	void Level::AddNewActor(Actor* newActor)
 	{
 		// 나중에 추가를 위해 임시 배열에 저장.

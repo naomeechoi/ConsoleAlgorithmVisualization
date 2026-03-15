@@ -21,22 +21,22 @@
     <ClCompile Include="Engine\Engine.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Texture\RDTexture.cpp">
+    <ClCompile Include="AlgorithmSystem\ReactionDiffusionSystem.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Input\MouseInput.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Mesh\Sphere\Sphere.cpp">
+    <ClCompile Include="Texture\Sphere.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Mesh\Cube\Cube.cpp">
+    <ClCompile Include="Texture\Cube.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="AStar\AStar.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Mesh\Plane\PlaneMesh.cpp">
+    <ClCompile Include="Texture\PlaneTexture.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Level\MainLevel.cpp">
@@ -50,22 +50,22 @@
     <ClInclude Include="Engine\Engine.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Texture\RDTexture.h">
+    <ClInclude Include="AlgorithmSystem\ReactionDiffusionSystem.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Input\MouseInput.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Mesh\Sphere\Sphere.h">
+    <ClInclude Include="Texture\Sphere.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Mesh\Cube\Cube.h">
+    <ClInclude Include="Texture\Cube.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="AStar\AStar.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Mesh\Plane\PlaneMesh.h">
+    <ClInclude Include="Texture\PlaneTexture.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Level\MainLevel.h">

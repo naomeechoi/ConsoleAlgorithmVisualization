@@ -1,6 +1,6 @@
-#include "PlaneMesh.h"
+#include "PlaneTexture.h"
 
-void PlaneMesh::UpdateTexture()
+void PlaneTexture::UpdateTexture()
 {
 	for (int y = 0; y < height; y++)
 	{
@@ -42,4 +42,12 @@ void PlaneMesh::UpdateTexture()
 			finalBuffer[i].Attributes = color;
 		}
 	}
+
+	int astarEndIdx = astarEndPosX + astarEndPosY * width;
+	finalBuffer[astarEndIdx].Char.AsciiChar = '!';
+	finalBuffer[astarEndIdx].Attributes = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | BACKGROUND_GREEN;
+
+	int astarIdx = astarPosX + astarPosY * width;
+	finalBuffer[astarIdx].Char.AsciiChar = '@';
+	finalBuffer[astarIdx].Attributes = FOREGROUND_RED;
 }

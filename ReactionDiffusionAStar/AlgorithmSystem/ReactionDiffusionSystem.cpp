@@ -1,5 +1,5 @@
 #define NOMINMAX
-#include "RDTexture.h"
+#include "ReactionDiffusionSystem.h"
 #include <algorithm>
 #include <fstream>
 #include <cmath>
@@ -26,17 +26,17 @@ static int RandomIndex(int min, int max)
 	return min + rand() % (max - min + 1);
 }
 
-RDTexture::ReactionDiffusion::ReactionDiffusion(int width, int height)
+ReactionDiffusionSystem::ReactionDiffusion::ReactionDiffusion(int width, int height)
 	:width(width), height(height), curA(width * height, 1.0), curB(width * height, 0.0), nextA(width* height), nextB(width* height)
 {
 	Params initial;
 	currentParams.store(initial);
 	LoadParams("Params.txt");
 
-	paramsThread = std::thread(&RDTexture::ReactionDiffusion::WatchParamsThread, this);
+	paramsThread = std::thread(&ReactionDiffusionSystem::ReactionDiffusion::WatchParamsThread, this);
 }
 
-RDTexture::ReactionDiffusion::~ReactionDiffusion()
+ReactionDiffusionSystem::ReactionDiffusion::~ReactionDiffusion()
 {
 	running = false;
 	if (paramsThread.joinable()) {
@@ -44,7 +44,7 @@ RDTexture::ReactionDiffusion::~ReactionDiffusion()
 	}
 }
 
-void RDTexture::ReactionDiffusion::SetRandomParams()
+void ReactionDiffusionSystem::ReactionDiffusion::SetRandomParams()
 {
 	std::lock_guard<std::mutex> lock(paramsMutex);
 	if (!paramsList.empty())
@@ -57,7 +57,7 @@ void RDTexture::ReactionDiffusion::SetRandomParams()
 	}
 }
 
-void RDTexture::ReactionDiffusion::SetRandomSeed()
+void ReactionDiffusionSystem::ReactionDiffusion::SetRandomSeed()
 {
 	SetRandomParams();
 
@@ -77,13 +77,13 @@ void RDTexture::ReactionDiffusion::SetRandomSeed()
 	}
 }
 
-int RDTexture::ReactionDiffusion::GetIdx(int x, int y)
+int ReactionDiffusionSystem::ReactionDiffusion::GetIdx(int x, int y)
 {
 	//return y * width + x;
 	return ((y + height) % height) * width + ((x + width) % width);
 }
 
-bool RDTexture::ReactionDiffusion::IsFileUpdated(const string& path)
+bool ReactionDiffusionSystem::ReactionDiffusion::IsFileUpdated(const string& path)
 {
 	auto ftime = std::filesystem::last_write_time(path);
 	if (ftime != lastWriteTime)
@@ -94,7 +94,7 @@ bool RDTexture::ReactionDiffusion::IsFileUpdated(const string& path)
 	return false; // 변경 없음
 }
 
-void RDTexture::ReactionDiffusion::LoadParams(const std::string& path)
+void ReactionDiffusionSystem::ReactionDiffusion::LoadParams(const std::string& path)
 {
 	std::ifstream file("Params.txt");
 	if (!file.is_open())
@@ -137,7 +137,7 @@ void RDTexture::ReactionDiffusion::LoadParams(const std::string& path)
 	}
 }
 
-void RDTexture::ReactionDiffusion::WatchParamsThread()
+void ReactionDiffusionSystem::ReactionDiffusion::WatchParamsThread()
 {
 	while (running)
 	{
@@ -149,7 +149,7 @@ void RDTexture::ReactionDiffusion::WatchParamsThread()
 	}
 }
 
-void RDTexture::ReactionDiffusion::Update()
+void ReactionDiffusionSystem::ReactionDiffusion::Update()
 {
 	Params p = currentParams.load();
 
@@ -195,13 +195,13 @@ void RDTexture::ReactionDiffusion::Update()
 	}
 }
 
-const std::vector<double>& RDTexture::ReactionDiffusion::GetConcentration()
+const std::vector<double>& ReactionDiffusionSystem::ReactionDiffusion::GetConcentration()
 {
 	std::lock_guard<std::mutex> lock(dataMutex);
 	return curB;
 }
 
-RDTexture::RDTexture(int width, int height)
+ReactionDiffusionSystem::ReactionDiffusionSystem(int width, int height)
 	: width(width), height(height)
 {
 	rdSystem1 = new ReactionDiffusion(width, height);
@@ -213,7 +213,7 @@ RDTexture::RDTexture(int width, int height)
 	mixedConcentration = vector<double>(width * height, 0.0);
 }
 
-RDTexture::~RDTexture()
+ReactionDiffusionSystem::~ReactionDiffusionSystem()
 {
 	if (rdSystem1)
 		delete rdSystem1;
@@ -224,7 +224,7 @@ RDTexture::~RDTexture()
 	rdSystem2 = nullptr;
 }
 
-void RDTexture::Update(float deltaTime)
+void ReactionDiffusionSystem::Update(float deltaTime)
 {
 	if (!ValidCheck())
 		return;
@@ -234,7 +234,7 @@ void RDTexture::Update(float deltaTime)
 	MixRdSystem(deltaTime);
 }
 
-void RDTexture::Submit(std::vector<CHAR_INFO>& submitBuf)
+void ReactionDiffusionSystem::Submit(std::vector<CHAR_INFO>& submitBuf)
 {
 	if (!ValidCheck())
 		return;
@@ -281,7 +281,7 @@ void RDTexture::Submit(std::vector<CHAR_INFO>& submitBuf)
 	}
 }
 
-double RDTexture::ComputeLighting(int x, int y)
+double ReactionDiffusionSystem::ComputeLighting(int x, int y)
 {
 	int idx = y * width + x;
 
@@ -305,7 +305,7 @@ double RDTexture::ComputeLighting(int x, int y)
 	return std::max(0.0, std::min(1.0, dot));
 }
 
-void RDTexture::MixRdSystem(float deltaTime)
+void ReactionDiffusionSystem::MixRdSystem(float deltaTime)
 {
 	if (!ValidCheck())
 		return;
@@ -347,7 +347,7 @@ void RDTexture::MixRdSystem(float deltaTime)
 	}
 }
 
-bool RDTexture::ValidCheck()
+bool ReactionDiffusionSystem::ValidCheck()
 {
 	if (!rdSystem1)
 		return false;

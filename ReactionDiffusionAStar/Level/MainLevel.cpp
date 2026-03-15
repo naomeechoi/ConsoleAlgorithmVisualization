@@ -1,28 +1,25 @@
 #include "MainLevel.h"
 #include "World/Level.h"
 #include "Actor/Plane.h"
-#include "Texture/RDTexture.h"
+#include "AlgorithmSystem/ReactionDiffusionSystem.h"
 #include "Renderer/Renderer.h"
+#include "AStar/AStar.h"
 
 using namespace RenderEngine;
 
 MainLevel::MainLevel()
 {
 	int width = Renderer::Get().GetScreenWidth();
-	int height = Renderer::Get().GetScreenWidth();
-	rdTexture = new RDTexture(width, height);
-	AddNewActor(new Plane());
-	for (Actor* const actor : actors)
-	{
-		if (actor)
-			actor->SetTexture(rdTexture->GetConcentration());
-	}
+	int height = Renderer::Get().GetScreenHeight();
+	rdSystem = new ReactionDiffusionSystem(width, height);
+	astar = new AStar(width, height);
 
 }
 
 MainLevel::~MainLevel()
 {
-	delete rdTexture;
+	delete rdSystem;
+	delete astar;
 }
 
 void MainLevel::OnExit()
@@ -32,22 +29,48 @@ void MainLevel::OnExit()
 
 void MainLevel::BeginPlay()
 {
+	if (hasBegan)
+		return;
+
+	hasBegan = true;
+
 	Level::BeginPlay();
+
+	AddNewActorImmediately(new Plane());
+	for (Actor* const actor : actors)
+	{
+		if (!actor)
+			continue;
+
+		actor->SetTexture(rdSystem->GetConcentration());
+		astar->SetHeuristic(actor->MakeHeuristic());
+		astar->SetGetNextPosList(actor->MakeGetNextPosList());
+		astar->SetReposition(actor->MakeGetAStarPos());
+		astar->SetPosition();
+	}
 }
 
 void MainLevel::Tick(float deltaTime)
 {
 	Level::Tick(deltaTime);
 
-	if (!rdTexture)
+	if (!rdSystem)
 		return;
 
-	rdTexture->Update(deltaTime);
+	rdSystem->Update(deltaTime);
+	const std::pair<int,int>& astarPos = astar->FindNextStepAStar(rdSystem->GetConcentration());
+	const std::pair<int,int>& astarEndPos = astar->GetEndPos();
 	for (Actor* const actor : actors)
 	{
-		if (actor)
-			actor->SetTexture(rdTexture->GetConcentration());
+		if (!actor)
+			continue;
+
+		actor->SetTexture(rdSystem->GetConcentration());
+		actor->SetAstarPos(astarPos.first, astarPos.second, astarEndPos.first, astarEndPos.second);
 	}
+
+	if (astarPos.first == astarEndPos.first && astarPos.second == astarEndPos.second)
+		astar->SetPosition();
 }
 
 void MainLevel::Draw()

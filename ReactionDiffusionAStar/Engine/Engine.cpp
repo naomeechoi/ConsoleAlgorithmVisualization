@@ -1,9 +1,9 @@
 #define NOMINMAX
 #include "Engine.h"
-#include "Texture/RDTexture.h"
-#include "Mesh/Plane/PlaneMesh.h"
-#include "Mesh/Sphere/Sphere.h"
-#include "Mesh/Cube/Cube.h"
+#include "AlgorithmSystem/ReactionDiffusionSystem.h"
+#include "Texture/PlaneTexture.h"
+#include "Texture/Sphere.h"
+#include "Texture/Cube.h"
 #include "AStar/AStar.h"
 #include "Input/MouseInput.h"
 #include <Windows.h>
@@ -38,20 +38,20 @@ const int HEIGHT = 40;
 
 Engine::Engine()
 {
-    rdTexture = new RDTexture(WIDTH, HEIGHT);
+    rdTexture = new ReactionDiffusionSystem(WIDTH, HEIGHT);
     //plane = new PlaneMesh(WIDTH, HEIGHT);
     sphere = new Sphere(WIDTH, HEIGHT, 1.0f);
     cube = new Cube(WIDTH, HEIGHT, 1.0f);
-    astar = new AStar(WIDTH, HEIGHT, 2);
+    astar = new AStar(WIDTH, HEIGHT);
     mouseInput = new MouseInput();
 
-    std::pair<int, int> startPos = GetRandomCubePos();
-    astarX = startPos.first;
-    astarY = startPos.second;
+    //std::pair<int, int> startPos = GetRandomCubePos();
+    //astarX = startPos.first;
+    //astarY = startPos.second;
 
-    std::pair<int, int> endPos = GetRandomCubePos();
-    astarEndX = endPos.first;
-    astarEndY = endPos.second;
+    //std::pair<int, int> endPos = GetRandomCubePos();
+    //astarEndX = endPos.first;
+    //astarEndY = endPos.second;
 }
 
 Engine::~Engine()
@@ -98,6 +98,7 @@ void Engine::Run()
     }
 }
 
+/*
 std::pair<int, int> Engine::GetRandomCubePos()
 {
     int x, y;
@@ -106,7 +107,7 @@ std::pair<int, int> Engine::GetRandomCubePos()
         y = RandomIndex(0, HEIGHT - 1);
     } while (!astar->IsCubeAtlasValid(x, y));
     return { x, y };
-}
+}*/
 
 void Engine::Tick(float deltaTime)
 {
@@ -130,19 +131,19 @@ void Engine::Tick(float deltaTime)
     
     if (astarX == astarEndX && astarY == astarEndY)
     {
-        std::pair<int, int> endPos = GetRandomCubePos();
-        astarEndX = endPos.first;
-        astarEndY = endPos.second;
+        //std::pair<int, int> endPos = GetRandomCubePos();
+        //astarEndX = endPos.first;
+        //astarEndY = endPos.second;
     }
 
     astarMoveTimer += deltaTime;
     if (astarMoveTimer >= ASTAR_MOVE_INTERVAL)
     {
-        astarMoveTimer = 0.0f;
+        //astarMoveTimer = 0.0f;
         //rdTexture->TestBufferClear();
-        std::pair<int, int> nextPos = astar->FindNextStepAStar(astarX, astarY, astarEndX, astarEndY, rdTexture->GetConcentration());
-        astarX = nextPos.first;
-        astarY = nextPos.second;
+       // std::pair<int, int> nextPos = astar->FindNextStepAStar(astarX, astarY, astarEndX, astarEndY, rdTexture->GetConcentration());
+        //astarX = nextPos.first;
+        //astarY = nextPos.second;
     }
 }
 

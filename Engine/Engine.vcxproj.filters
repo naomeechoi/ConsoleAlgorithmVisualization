@@ -30,7 +30,7 @@
     <ClInclude Include="World\Level.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="World\Mesh.h">
+    <ClInclude Include="World\Texture.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="World\Actor.h">
@@ -47,7 +47,7 @@
     <ClCompile Include="World\Level.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="World\Mesh.cpp">
+    <ClCompile Include="World\Texture.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="World\Actor.cpp">

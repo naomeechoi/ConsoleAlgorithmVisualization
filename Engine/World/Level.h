@@ -17,6 +17,7 @@ namespace RenderEngine
 		virtual void Draw();
 
 		// 액터 추가 함수.
+		void AddNewActorImmediately(Actor* newActor);
 		void AddNewActor(Actor* newActor);
 
 		// 액터 추가/제거 처리 함수.
@@ -28,6 +29,7 @@ namespace RenderEngine
 
 		// 실행 중에 추가 요청된 액터의 배열.
 		std::vector<Actor*> addRequestedActors;
+		bool hasBegan = false;
 	};
 }
 

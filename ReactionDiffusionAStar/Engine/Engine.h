@@ -13,9 +13,9 @@ private:
 	void Draw();
 
 private:
-	std::pair<int, int> GetRandomCubePos();
+	//std::pair<int, int> GetRandomCubePos();
 	class Renderer* renderer;
-	class RDTexture* rdTexture;
+	class ReactionDiffusionSystem* rdTexture;
 	class Plane* plane;
 	class Sphere* sphere;
 	class Cube* cube;

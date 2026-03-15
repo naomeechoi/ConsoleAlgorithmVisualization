@@ -2,332 +2,75 @@
 #include "AStar.h"
 #include <vector>
 #include <queue>
-#include <cmath>
 #include <utility>
-#include <cstdlib>
-#include <algorithm>
-#include <Mesh/Cube/Cube.h>
-const float PI = 3.14159265f;
 using namespace std;
 
-int AStar::GetFace(int x, int y)
+
+void AStar::SetHeuristic(function<float(int, int, int, int)> f)
 {
-	int fx = x / faceSize();
-	int fy = y / faceSize();
-
-	// 십자가 전개도의 중앙 가로줄
-	if (fy == 1) {
-		if (fx == 0) return 1; // FACE_NEG_X (왼쪽)
-		if (fx == 1) return 4; // FACE_Z (정면)
-		if (fx == 2) return 0; // FACE_X (오른쪽)
-		if (fx == 3) return 5; // FACE_NEG_Z (뒷면)
-	}
-
-	// 위/아래 면
-	if (fx == 1 && fy == 0) return 2; // FACE_Y (위쪽)
-	if (fx == 1 && fy == 2) return 3; // FACE_NEG_Y (아래쪽)
-
-	return -1;
+	Heuristic = f;
 }
 
-float AStar::Heuristic(int sx, int sy, int ex, int ey)
+void AStar::SetGetNextPosList(function<vector<vector<float>>(int, int)> f)
 {
-	return static_cast<float>((abs(sx - ex) + abs(sy - ey)));
+	GetNextPosList = f;
 }
 
-bool AStar::IsCubeAtlasValid(int x, int y) const {
-	if (type != 2) return true;
-	int fx = x / (width / 4);
-	int fy = y / (height / 3);
-	if (fy == 1) return true;
-	if (fx == 1 && (fy == 0 || fy == 2)) return true;
-	return false;
+void AStar::SetReposition(std::function<std::pair<int, int>()> f)
+{
+	Reposition = f;
 }
 
-void AStar::GetNextPosListAndMinCost(std::pair<int, int> curPos, std::vector<AStar::NextPos>& nextPosList)
+pair<int, int> AStar::FindNextStepAStar(const vector<double>& rdConcentration)
 {
-	int fs = faceSize();
-	int cx = curPos.first;
-	int cy = curPos.second;
-	int curFace = GetFace(cx, cy);
-	int lx = cx % fs; // 면 내부 x (0 ~ fs-1)
-	int ly = cy % fs; // 면 내부 y (0 ~ fs-1)
-
-
-	// 8방향 탐색
-	vector<vector<int>> list = { {-1,0},{1,0},{0,-1},{0,1},{-1,-1},{-1,1},{1,-1},{1,1} };
-
-	for (int i = 0; i < list.size(); i++)
-	{
-		AStar::NextPos res;
-		res.cost = (abs(list[i][0]) == abs(list[i][1])) ? 1.414f : 1.0f;
-
-		int nx = cx + list[i][0];
-		int ny = cy + list[i][1];
-
-		if (type == 2)
-		{
-			if (abs(cy - height) < 3 && cx >= width / 4 && cx < width / 2) { // 파랑색 면(중앙)으로 올라가려는 시도라면
-
-				float t = 1.0f - (cx - width / 4.0f) / (width / 4.0f);
-
-				float newX = (width / 4.0f) * t + width / 4.0f * 3.0f;
-				float newY = (height / 3.0f * 2.0f) - 5;
-
-				nx = (int)newX;
-				ny = (int)newY;
-				res.cost = 0;
-				res.x = nx;
-				res.y = ny;
-				nextPosList.emplace_back(res);
-				return;
-			}
-
-			if (list[i][0] == 1)
-			{
-				//초록 오룬쪽 모서리에서 빨강 위쪽
-				if (abs(cx - width / 4 * 2) < 2 && cy >= 0 && cy <= height / 3)
-				{
-					float t = 1.0f - (cy / (height / 3.0f));
-
-					float newX = width / 4.0f * 2 + t * (width / 4.0f);
-					float newY = height / 3.0f;
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				// 연초록 오른쪽에서 빨강 아래쪽
-				else if (abs(cx - width / 4 * 2) < 2 && cy >= height / 3 * 2 && cy < height)
-				{
-					float t = 1.0f - ((cy - height * 2 / 3) / (height / 3));
-
-					float newX = width / 4.0f * 2 + t * (width / 4.0f);
-					float newY = height / 3.0f * 2;
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				// 연파랑에서 연빨강
-				else if (abs(cx - width) < 2 && cy >= height / 3 && cy < height / 3 * 2)
-				{
-					nx = 0;
-					ny = cy;
-				}
-			}
-			else if (list[i][0] == -1)
-			{
-				// 초록 왼쪽에서 연빨강 위쪽
-				if (abs(cx - width / 4) < 2 && cy >= 0 && cy <= height / 3)
-				{
-					float t = (cy / (height / 3.0f));
-
-					float newX = 0 + t * (width / 4.0f);
-					float newY = height / 3.0f;
-
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				// 연초록 왼쪽에서 연빨강 아래쪽
-				else if (abs(cx - width / 4) < 2 && cy >= height / 3 * 2 && cy < height)
-				{
-					float t = ((cy - height * 2 / 3) / (height / 3));
-
-					float newX = t * (width / 4.0f);
-					float newY = height / 3.0f * 2;
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				// 연빨강에서 연파랑
-				else if (abs(cx - 0) < 2 && cy >= height / 3 && cy < height / 3 * 2)
-				{
-					nx = width - 1;
-					ny = cy;
-				}
-			}
-
-			if (list[i][1] == -1)
-			{
-				// 빨강 위쪽 모서리에서 초록색 오른쪽
-				if (abs(cy - height / 3) < 2 && cx >= width / 4 * 2 && cx <= width / 4 * 3)
-				{
-					float t = 1.0f - ((cx - width / 4.0f * 2) / (width / 4.0f));
-
-					float newX = width * 2 / 4;
-					float newY = t * (height / 3.0f);
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				// 연빨강 위쪽에서 초록색 왼쪽
-				else if (abs(cy - height / 3) < 2 && cx >= 0 && cx <= width / 4)
-				{
-					float t = (cx / (width / 4.0f));
-
-					float newX = width / 4.0f;
-					float newY = 0 + t * (height / 3.0f);
-
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				// 연파랑 위쪽에서 초록 위쪽
-				else if (abs(cy - height / 3) < 2 && cx >= width / 4 * 3 && cx < width)
-				{
-					float t = 1.0f - ((cx - width / 4.0f * 3.0f) / (width / 4.0f));
-
-					float newX = (width / 4.0f) * t + width / 4.0f;
-					float newY = 0;
-
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				else if (abs(cy - 0) < 2 && cx >= width / 4 && cx < width / 2)
-				{
-					float t = 1.0f - ((cx - width / 4.0f) / (width / 4.0f));
-
-					float newX = width / 4.0f * 3 + t * (width / 4.0f);
-					float newY = height / 3.0f;
-
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				// 연초록(NEG_Y) 면의 위쪽 경계 (y = height * 2/3 근처)에서 파랑 하드 코딩
-				else if (abs(cy - (height / 3 * 2)) < 2 && cx >= width / 4 && cx < width / 2)
-				{
-					// 연초록의 x좌표 비율을 그대로 파랑의 x좌표로 전달
-					float t = (cx - (width / 4.0f)) / (width / 4.0f);
-
-					nx = (int)(width / 4.0f + t * (width / 4.0f));
-					ny = (int)(height / 3.0f * 2.0f - 1); // 파랑의 맨 아랫줄로 진입
-				}
-
-			}
-			else if (list[i][1] == 1)
-			{
-				// 빨강 아래쪽에서 연초록 오른쪽
-				if (abs(cy - height / 3 * 2) < 2 && cx >= width / 2 && cx < width / 4 * 3)
-				{
-					float t = 1.0f - ((cx - width / 2.0f) / (width / 4.0f));
-
-					float newX = width / 2.0f;
-					float newY = height / 3.0f * 2 + t * (height / 3.0f);
-
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				// 연빨강 아래쪽에서 연초록 왼쪽
-				else if (abs(cy - height / 3 * 2) < 2 && cx >= 0 && cx < width / 4)
-				{
-					float t = (cx / (width / 4.0f));
-
-					float newX = width / 4.0f;
-					float newY = height / 3.0f * 2 + t * (height / 3.0f);
-
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				// 연파랑 아래쪽에서 연초록 아래쪽
-				else if (abs(cy - height / 3 * 2) < 2 && cx >= width / 4 * 3 && cx < width)
-				{
-					float t = ((cx - width / 4.0f * 3.0f) / (width / 4.0f));
-
-					float newX = (width / 4.0f) * t + width / 4.0f;
-					float newY = height - 5;
-
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				// 연초록 아래쪽 연파랑 아래쪽
-				else if (abs(cy - height) < 2 && cx >= width / 4 && cx < width / 4 * 2)
-				{
-					float t = 1.0f - (cx - width / 4.0f) / (width / 4.0f);
-
-					float newX = (width / 4.0f) * t + width / 4.0f * 3.0f;
-					float newY = (height / 3.0f * 2.0f) - 5;
-
-					nx = (int)newX;
-					ny = (int)newY;
-				}
-				// 파랑에서 연초록 하드코딩
-				else if (abs(cy - (height / 3 * 2)) < 2 && cx >= width / 4 && cx < width / 2)
-				{
-					// 파랑의 x좌표 비율을 그대로 연초록의 x좌표로 전달
-					float t = (cx - (width / 4.0f)) / (width / 4.0f);
-
-					nx = (int)(width / 4.0f + t * (width / 4.0f));
-					ny = (int)(height / 3.0f * 2.0f + 1); // 연초록의 맨 윗줄로 진입
-				}
-			}
-		}
-
-		//if (type == 2 && !IsCubeAtlasValid(nx, ny))
-		//	continue;
-		// 최종 유효성 검사
-		if (nx < 0 || ny < 0 || nx >= width || ny >= height)
-			continue;
-
-		
-		res.x = nx;
-		res.y = ny;
-		nextPosList.emplace_back(res);
-	}
-}
-
-std::pair<int, int> AStar::FindNextStepAStar(int sx, int sy, int ex, int ey, const std::vector<double>& densities)
-{
-	if (sx == ex && sy == ey)
-		return { sx, sy };
+	if (startX == endX && startY == endY)
+		return { startX, startY };
 
 	priority_queue <Node*, vector<Node*>, CompareNode> openList;
 	vector<Node*> nodes;
 	vector<float> gScore(width * height, FLT_MAX);
-	std::vector<AStar::NextPos> nextPosList;
 
-	nodes.push_back(new Node{ sx, sy, 0.0f, Heuristic(sx, sy, ex, ey), nullptr });
+	nodes.push_back(new Node{ startX, startY, 0.0f, Heuristic(startX, startY, endX, endY), nullptr });
 	Node* startNode = nodes[0];
 	openList.push(startNode);
-	gScore[sy * width + sx] = 0;
+	gScore[startY * width + startX] = 0;
 
 	Node* bestNode = startNode;
 
-	pair<int, int> result;
 	while (!openList.empty())
 	{
 		Node* current = openList.top();
 		openList.pop();
 
-		if (current->x == ex && current->y == ey)
+		if (current->x == endX && current->y == endY)
 		{
-			Node* cur = current;
-			Node* prev = cur->parent;
-			while (prev != startNode && prev != nullptr)
-			{
-				cur = prev;
-				prev = cur->parent;
-			}
-			result.first = cur->x;
-			result.second = cur->y;
+			bestNode = current;
 			break;
 		}
 
 		if (current->h < bestNode->h)
 			bestNode = current;
 
-		nextPosList.clear();
-		GetNextPosListAndMinCost({ current->x, current->y }, nextPosList);
+		vector<vector<float>> nextPosList = GetNextPosList(current->x, current->y);
 
-
-		for (const auto& nextPos : nextPosList)
+		for (vector<float>& nextPos : nextPosList)
 		{
-			if (nextPos.x < 0 || nextPos.x >= width || nextPos.y < 0 || nextPos.y >= height)
+			int nextPosX = static_cast<int>(std::round(nextPos[0]));
+			int nextPosY = static_cast<int>(std::round(nextPos[1]));
+			float nextPosCost = nextPos[2];
+			if (nextPosX < 0 || nextPosX >= width || nextPosY < 0 || nextPosY >= height)
 				continue;
 
-			int nextIdx = nextPos.y * width + nextPos.x;
-			int endIdx = ey * width + ex;
-			if (nextIdx != endIdx && densities[nextIdx] > 0.10)
+			int nextIdx = nextPosY * width + nextPosX;
+			int endIdx = endY * width + endX;
+			if (nextIdx != endIdx  && rdConcentration[nextIdx] > 0.10)
 				continue;
 
-			float newG = current->g + nextPos.cost;
+			float newG = current->g + nextPosCost;
 			if (newG < gScore[nextIdx])
 			{
 				gScore[nextIdx] = newG;
-				nodes.push_back(new Node{ nextPos.x, nextPos.y, newG, Heuristic(nextPos.x, nextPos.y, ex, ey), current });
+				nodes.push_back(new Node{ nextPosX, nextPosY, newG, Heuristic(nextPosX, nextPosY, endX, endY), current });
 				Node* newNode = nodes.back();
 				openList.push(newNode);
 
@@ -337,23 +80,41 @@ std::pair<int, int> AStar::FindNextStepAStar(int sx, int sy, int ex, int ey, con
 		}
 	}
 
-	Node* idx = bestNode;
-	Node* prev = idx->parent;
+	Node* prev = bestNode->parent;
 	while (prev != startNode && prev != nullptr)
 	{
-		idx = prev;
-		prev = idx->parent;
+		bestNode = prev;
+		prev = bestNode->parent;
 	}
 
-	result.first = idx->x;
-	result.second = idx->y;
+	startX = bestNode->x;
+	startY = bestNode->y;
 
 	for (Node* n : nodes)
 		delete n;
 
-	return result;
+	return { startX, startY };
 }
 
+std::pair<int, int> AStar::GetEndPos()
+{
+	return std::pair<int, int>(endX, endY);
+}
+
+void AStar::SetPosition()
+{
+	if (!Reposition)
+		return;
+
+	startX = endX;
+	startY = endY;
+
+	std::pair<int, int> nextEndPos = Reposition();
+	endX = nextEndPos.first;
+	endY = nextEndPos.second;
+}
+
+/*
 void AStar::Submit(std::vector<CHAR_INFO>& buffer, int x, int y, int endX, int endY)
 {
 	int idx = y * width + x;
@@ -434,4 +195,4 @@ void AStar::SubmitOnSphere(std::vector<CHAR_INFO>& buffer,
 			}
 		}
 	}
-}
+}*/

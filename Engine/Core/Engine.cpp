@@ -106,6 +106,7 @@ namespace RenderEngine
 
             if (deltaTime >= oneFrameTime)
             {
+                BeginPlay();
                 Tick(deltaTime);
                 Draw();
                 previousTime = currentTime;
@@ -121,6 +122,17 @@ namespace RenderEngine
         mainLevel = level;
     }
 
+    void Engine::BeginPlay()
+    {
+        // 레벨이 있으면 이벤트 전달.
+        if (!mainLevel)
+        {
+            return;
+        }
+
+        mainLevel->BeginPlay();
+
+    }
     void Engine::Tick(float deltaTime)
     {
         if(mainLevel)

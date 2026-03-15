@@ -32,6 +32,7 @@ namespace RenderEngine
 	private:
 		void LoadSetting();
 		std::string trim(const std::string& str);
+		void BeginPlay();
 		void Tick(float deltaTime);
 		void Draw();
 

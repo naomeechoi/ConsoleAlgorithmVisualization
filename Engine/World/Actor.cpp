@@ -2,7 +2,7 @@
 #include "Core/Engine.h"
 #include "Renderer/Renderer.h"
 #include "World/Level.h"
-#include "World/Mesh.h"
+#include "World/Texture.h"
 
 namespace RenderEngine
 {
@@ -20,14 +20,14 @@ namespace RenderEngine
 
 	void Actor::Tick(float deltaTime)
 	{
-		if (mesh)
-			mesh->UpdateTexture();
+		if (texture)
+			texture->UpdateTexture();
 	}
 
 	void Actor::Draw()
 	{
-		if(mesh)
-			Renderer::Get().Submit(std::move(mesh->GetFinalBuffer()));
+		if(texture)
+			Renderer::Get().Submit(std::move(texture->GetFinalBuffer()));
 	}
 
 	void Actor::SetOwner(Level* newOwner)
@@ -41,8 +41,14 @@ namespace RenderEngine
 
 	void Actor::SetTexture(const std::vector<double>& texture)
 	{
-		if (mesh)
-			mesh->SetTexture(texture);
+		if (this->texture)
+			this->texture->SetTexture(texture);
+	}
+
+	void Actor::SetAstarPos(int x, int y, int endX, int endY)
+	{
+		if (this->texture)
+			this->texture->SetAStarPos(x, y, endX, endY);
 	}
 
 	void Actor::Destroy()

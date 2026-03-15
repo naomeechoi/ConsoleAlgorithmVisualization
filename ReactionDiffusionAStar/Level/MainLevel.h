@@ -13,6 +13,7 @@ public:
 	virtual void Draw() override;
 
 private:
-	class RDTexture* rdTexture = nullptr;
+	class ReactionDiffusionSystem* rdSystem = nullptr;
+	class AStar* astar = nullptr;
 };
 
