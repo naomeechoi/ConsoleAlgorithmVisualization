@@ -91,6 +91,7 @@ xcopy $(OutDir)\Engine.lib ..\Library\Engine\$(Platform)\$(Configuration)\ /e /y
     <ClInclude Include="Core\Engine.h" />
     <ClInclude Include="Renderer\Renderer.h" />
     <ClInclude Include="Util\Random.h" />
+    <ClInclude Include="Util\Timer.h" />
     <ClInclude Include="World\Actor.h" />
     <ClInclude Include="World\Level.h" />
     <ClInclude Include="World\Texture.h" />
@@ -98,6 +99,7 @@ xcopy $(OutDir)\Engine.lib ..\Library\Engine\$(Platform)\$(Configuration)\ /e /y
   <ItemGroup>
     <ClCompile Include="Core\Engine.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="Util\Timer.cpp" />
     <ClCompile Include="World\Actor.cpp" />
     <ClCompile Include="World\Level.cpp" />
     <ClCompile Include="World\Texture.cpp" />

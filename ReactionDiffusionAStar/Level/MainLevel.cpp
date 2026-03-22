@@ -6,6 +6,7 @@
 #include "AStar/AStar.h"
 
 using namespace RenderEngine;
+const float ASTAR_INTERVAL = 0.1f;
 
 MainLevel::MainLevel()
 {
@@ -13,7 +14,6 @@ MainLevel::MainLevel()
 	int height = Renderer::Get().GetScreenHeight();
 	rdSystem = new ReactionDiffusionSystem(width, height);
 	astar = new AStar(width, height);
-
 }
 
 MainLevel::~MainLevel()
@@ -48,6 +48,7 @@ void MainLevel::BeginPlay()
 		astar->SetReposition(actor->MakeGetAStarPos());
 		astar->SetPosition();
 	}
+	astarTimer.SetTargetTime(ASTAR_INTERVAL);
 }
 
 void MainLevel::Tick(float deltaTime)
@@ -58,8 +59,8 @@ void MainLevel::Tick(float deltaTime)
 		return;
 
 	rdSystem->Update(deltaTime);
-	const std::pair<int,int>& astarPos = astar->FindNextStepAStar(rdSystem->GetConcentration());
-	const std::pair<int,int>& astarEndPos = astar->GetEndPos();
+	UpdataAStarPos(deltaTime);
+
 	for (Actor* const actor : actors)
 	{
 		if (!actor)
@@ -69,8 +70,24 @@ void MainLevel::Tick(float deltaTime)
 		actor->SetAstarPos(astarPos.first, astarPos.second, astarEndPos.first, astarEndPos.second);
 	}
 
+	RepositionAStar();
+}
+
+void MainLevel::RepositionAStar()
+{
 	if (astarPos.first == astarEndPos.first && astarPos.second == astarEndPos.second)
 		astar->SetPosition();
+}
+
+void MainLevel::UpdataAStarPos(float deltaTime)
+{
+	astarTimer.Tick(deltaTime);
+	if (!astarTimer.IsTimeOut())
+		return;
+
+	astarTimer.Reset();
+	astarPos = astar->FindNextStepAStar(rdSystem->GetConcentration());
+	astarEndPos = astar->GetEndPos();
 }
 
 void MainLevel::Draw()
