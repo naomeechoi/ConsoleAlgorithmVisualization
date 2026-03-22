@@ -82,26 +82,26 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Actor\Plane.cpp" />
+    <ClCompile Include="Actor\Sphere.cpp" />
     <ClCompile Include="AStar\AStar.cpp" />
-    <ClCompile Include="Engine\Engine.cpp" />
-    <ClCompile Include="Input\MouseInput.cpp" />
-    <ClCompile Include="Level\MainLevel.cpp" />
+    <ClCompile Include="Level\PlaneLevel.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Level\SphereLevel.cpp" />
     <ClCompile Include="Texture\PlaneTexture.cpp" />
     <ClCompile Include="AlgorithmSystem\ReactionDiffusionSystem.cpp" />
     <ClCompile Include="Texture\Cube.cpp" />
-    <ClCompile Include="Texture\Sphere.cpp" />
+    <ClCompile Include="Texture\SphereTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor\Plane.h" />
+    <ClInclude Include="Actor\Sphere.h" />
     <ClInclude Include="AStar\AStar.h" />
-    <ClInclude Include="Engine\Engine.h" />
-    <ClInclude Include="Input\MouseInput.h" />
-    <ClInclude Include="Level\MainLevel.h" />
+    <ClInclude Include="Level\PlaneLevel.h" />
+    <ClInclude Include="Level\SphereLevel.h" />
     <ClInclude Include="Texture\PlaneTexture.h" />
     <ClInclude Include="AlgorithmSystem\ReactionDiffusionSystem.h" />
     <ClInclude Include="Texture\Cube.h" />
-    <ClInclude Include="Texture\Sphere.h" />
+    <ClInclude Include="Texture\SphereTexture.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -2,11 +2,11 @@
 #include "World/Level.h"
 #include "Util/Timer.h"
 
-class MainLevel : public RenderEngine::Level
+class PlaneLevel : public RenderEngine::Level
 {
 public:
-	MainLevel();
-	virtual ~MainLevel();
+	PlaneLevel();
+	virtual ~PlaneLevel() override;
 
 	virtual void OnExit() override;
 	virtual void BeginPlay() override;

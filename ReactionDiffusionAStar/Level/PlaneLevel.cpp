@@ -1,4 +1,4 @@
-#include "MainLevel.h"
+#include "PlaneLevel.h"
 #include "World/Level.h"
 #include "Actor/Plane.h"
 #include "AlgorithmSystem/ReactionDiffusionSystem.h"
@@ -8,7 +8,7 @@
 using namespace RenderEngine;
 const float ASTAR_INTERVAL = 0.1f;
 
-MainLevel::MainLevel()
+PlaneLevel::PlaneLevel()
 {
 	int width = Renderer::Get().GetScreenWidth();
 	int height = Renderer::Get().GetScreenHeight();
@@ -16,18 +16,18 @@ MainLevel::MainLevel()
 	astar = new AStar(width, height);
 }
 
-MainLevel::~MainLevel()
+PlaneLevel::~PlaneLevel()
 {
 	delete rdSystem;
 	delete astar;
 }
 
-void MainLevel::OnExit()
+void PlaneLevel::OnExit()
 {
 	Level::OnExit();
 }
 
-void MainLevel::BeginPlay()
+void PlaneLevel::BeginPlay()
 {
 	if (hasBegan)
 		return;
@@ -51,7 +51,7 @@ void MainLevel::BeginPlay()
 	astarTimer.SetTargetTime(ASTAR_INTERVAL);
 }
 
-void MainLevel::Tick(float deltaTime)
+void PlaneLevel::Tick(float deltaTime)
 {
 	Level::Tick(deltaTime);
 
@@ -73,13 +73,13 @@ void MainLevel::Tick(float deltaTime)
 	RepositionAStar();
 }
 
-void MainLevel::RepositionAStar()
+void PlaneLevel::RepositionAStar()
 {
 	if (astarPos.first == astarEndPos.first && astarPos.second == astarEndPos.second)
 		astar->SetPosition();
 }
 
-void MainLevel::UpdataAStarPos(float deltaTime)
+void PlaneLevel::UpdataAStarPos(float deltaTime)
 {
 	astarTimer.Tick(deltaTime);
 	if (!astarTimer.IsTimeOut())
@@ -90,7 +90,7 @@ void MainLevel::UpdataAStarPos(float deltaTime)
 	astarEndPos = astar->GetEndPos();
 }
 
-void MainLevel::Draw()
+void PlaneLevel::Draw()
 {
 	Level::Draw();
 }
